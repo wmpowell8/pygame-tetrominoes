@@ -1,6 +1,5 @@
 pygame-tetrominoes
-
---
+==
 
 Pygame tetromino game I poured plenty of hours into. Intended to one day be ported to the HP Prime Graphing Calculator, but this idea has been set aside (for now). Unfortunately it was intended to run at a solid 60 FPS like it does locally on my PC and the browser makes it extremely laggy, so things are incredibly slow.
 
