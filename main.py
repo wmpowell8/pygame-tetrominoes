@@ -1,7 +1,8 @@
 import os, sys, pygame, time, random, json
 
 defaultLang = {
-    "title"        : "обычный клон тетриса",
+    "title"        : "pygame-тетромино",
+    "version"      : "публичная бета .0",
     "blockOut"     : "блокировать",
     "lockOut"      : "Блокировка",
     "classic"      : "классическая",
@@ -614,6 +615,7 @@ while True:
 
     if state in [0, 1]:
         render_text(lang["title"], (10, 50), size = 24)
+        render_text(lang["version"], (20, 220), size = 14)
     if state in [1, 2, 3, 4, 5, 6]:
         updateMenuText()
         for i in range(len(menuOptions[state])):

@@ -1,5 +1,5 @@
 {
-    "title"        : "通常のテトリスクローン",
+    "title"        : "pygame-テトロミノ",
     "blockOut"     : "遮る",
     "lockOut"      : "ロックアウト",
     "classic"      : "クラシック",

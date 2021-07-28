@@ -1,5 +1,6 @@
 {
-    "title"        : "ordinary tetris clone",
+    "title"        : "pygame-tetrominoes",
+    "version"      : "public beta .0",
     "blockOut"     : "Block Out",
     "lockOut"      : "Lock Out",
     "classic"      : "classic",
