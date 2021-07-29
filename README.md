@@ -7,4 +7,4 @@ As for why everything's in Russian... I wasn't able to get other languages to lo
 
 This game was originally called "обычный клон тетриса" which means "ordinary Tetris clone" in Russian, but I renamed it due to potential copyright issues. I probably would have been fine though.
 
-This version of the game has been designated: Public Beta .0
+This version of the game was originally going to be called "public beta .0", but after reading about versioning conventions, I decided to call it a0.0.0, "a" meaning "alpha".

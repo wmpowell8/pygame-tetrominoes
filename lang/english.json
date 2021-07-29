@@ -1,6 +1,6 @@
 {
     "title"        : "pygame-tetrominoes",
-    "version"      : "public beta .0",
+    "version"      : "version",
     "blockOut"     : "Block Out",
     "lockOut"      : "Lock Out",
     "classic"      : "classic",
