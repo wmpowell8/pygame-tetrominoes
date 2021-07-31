@@ -1,7 +1,7 @@
 pygame-tetrominoes
 ==
 
-Pygame tetromino game I poured plenty of hours into. Intended to one day be ported to the HP Prime Graphing Calculator, but this idea has been set aside (for now). Unfortunately it was intended to run at a solid 60 FPS like it does locally on my PC and the browser makes it extremely laggy, so things are incredibly slow.
+Pygame tetromino game I poured plenty of hours into. Intended to one day be ported to the HP Prime Graphing Calculator, but this idea has been set aside (for now).
 
 As for why everything's in Russian... I wasn't able to get other languages to load via JSON. I used Google Translate to create all this Russian text for the game as I do not know the language. Why is the default language Russian? The original concept for the game was invented in Russia, and I wanted it to feel more traditional at first.
 
