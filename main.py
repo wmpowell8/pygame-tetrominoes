@@ -590,7 +590,7 @@ def flashColor(color = None):
             color = pygame.Color(255, 255, 255)
     return [pygame.Color(255, 255, 255), color][frameParity >= 2]
 
-lastFrameTime = time.perf_counter()
+lastFrameTotalTime = (lastFrameTime := time.perf_counter())
 
 # Game loop
 while True:
@@ -818,10 +818,11 @@ while True:
         None
 
     # "Кадров в секунду" means "frames per second" in Russian
-    render_text(lang["fps"] + f" = {1 / lastFrameTime:.1f}", color = flashColor())
+    render_text(lang["fps"] + f" = {1 / lastFrameTime:.1f} --> {1 / lastFrameTotalTime:.1f}", color = flashColor())
 
     # Update the display and FPS value and wait for the next frame to start
     pygame.display.flip()
     lastFrameTime = time.perf_counter() - t
     while time.perf_counter() < t + 1 / 60:
         None
+    lastFrameTotalTime = time.perf_counter() - t
