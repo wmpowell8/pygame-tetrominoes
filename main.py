@@ -311,255 +311,255 @@ def linesSentFromCombo(combo):
 
 # The master function of the game which updates the current state of the game
 def gameTick(gravity = gravity):
-        global allClear, autoRepeatTimer, backToBack, combo, currentGravity, fallMinoes, fallTimer, hardDropPressedLastFrame, holdPressedLastFrame, holdQueue, inputsUntilLock, isDASCharged, leftRotatePressedLastFrame, level, lineClearTimer, lineClears, linesToClear, lockDelay, lockTimer, lowestTetrominoYPosition, nextTetrominoes, pointsScoredByLineClear, rightRotatePressedLastFrame, score, stack, tetrominoAlreadyHeld, tetrominoPosition, tetrominoRotatedDirectlyBeforeLock, tSpin
-        
-        currentGravity = gravity(level)
+    global allClear, autoRepeatTimer, backToBack, combo, currentGravity, fallMinoes, fallTimer, hardDropPressedLastFrame, holdPressedLastFrame, holdQueue, inputsUntilLock, isDASCharged, leftRotatePressedLastFrame, level, lineClearTimer, lineClears, linesToClear, lockDelay, lockTimer, lowestTetrominoYPosition, nextTetrominoes, pointsScoredByLineClear, rightRotatePressedLastFrame, score, stack, tetrominoAlreadyHeld, tetrominoPosition, tetrominoRotatedDirectlyBeforeLock, tSpin
+    
+    currentGravity = gravity(level)
 
-        # Manage line clears during line clear delay
-        if lineClearTimer > 0:
-            lineClearTimer -= 1
-            if lineClearTimer <= 0:
-                for i in reversed(linesToClear):
-                    del stack[i]
-                    stack += [[-1] * 10]
+    # Manage line clears during line clear delay
+    if lineClearTimer > 0:
+        lineClearTimer -= 1
+        if lineClearTimer <= 0:
+            for i in reversed(linesToClear):
+                del stack[i]
+                stack += [[-1] * 10]
+            nextTetrominoes += [randomGenerator()]
+            initializeNewTetromino(nextTetrominoes[0])
+            del nextTetrominoes[0]
+            tetrominoAlreadyHeld = False
+
+    # Manage hard drop
+    if checkKeys(defaultKeys["hardDrop"]) and not hardDropPressedLastFrame and lineClearTimer <= 0:
+        ghostHeight = tetrominoPosition[1]
+        ghostTouchingGround = False
+        while not ghostTouchingGround:
+            for i in tetrominoes[currentTetromino][tetrominoRotation]:
+                if stack[ghostHeight + i[1]][tetrominoPosition[0] + i[0]] != -1 or ghostHeight + i[1] < 0:
+                    ghostTouchingGround = True
+                    break
+            if not ghostTouchingGround:
+                for i in tetrominoes[currentTetromino][tetrominoRotation]:
+                    fallMinoes += [(currentTetromino, (tetrominoPosition[0] + i[0], ghostHeight + i[1]))]
+                ghostHeight -= 1
+                tetrominoRotatedDirectlyBeforeLock = 0
+        if ghostHeight < tetrominoPosition[1]:
+            ghostHeight += 1
+        score += 2 * (tetrominoPosition[1] - ghostHeight)
+        tetrominoPosition = (tetrominoPosition[0], ghostHeight)
+        fallTimer = 0
+        lockTimer = 0
+    hardDropPressedLastFrame = checkKeys(defaultKeys["hardDrop"])
+
+    # Manage hold
+    if checkKeys(defaultKeys["hold"]) and not (holdPressedLastFrame or tetrominoAlreadyHeld) and lineClearTimer <= 0:
+        holdCopy = holdQueue
+        holdQueue = currentTetromino
+        initializeNewTetromino(holdCopy)
+        tetrominoAlreadyHeld = True
+    holdPressedLastFrame = checkKeys(defaultKeys["hold"])
+
+    if lineClearTimer <= 0:
+        # Generate new tetrominoes
+        if currentTetromino == -1:
+            while currentTetromino == -1:
                 nextTetrominoes += [randomGenerator()]
                 initializeNewTetromino(nextTetrominoes[0])
                 del nextTetrominoes[0]
-                tetrominoAlreadyHeld = False
-
-        # Manage hard drop
-        if checkKeys(defaultKeys["hardDrop"]) and not hardDropPressedLastFrame and lineClearTimer <= 0:
-            ghostHeight = tetrominoPosition[1]
-            ghostTouchingGround = False
-            while not ghostTouchingGround:
-                for i in tetrominoes[currentTetromino][tetrominoRotation]:
-                    if stack[ghostHeight + i[1]][tetrominoPosition[0] + i[0]] != -1 or ghostHeight + i[1] < 0:
-                        ghostTouchingGround = True
-                        break
-                if not ghostTouchingGround:
-                    for i in tetrominoes[currentTetromino][tetrominoRotation]:
-                        fallMinoes += [(currentTetromino, (tetrominoPosition[0] + i[0], ghostHeight + i[1]))]
-                    ghostHeight -= 1
-                    tetrominoRotatedDirectlyBeforeLock = 0
-            if ghostHeight < tetrominoPosition[1]:
-                ghostHeight += 1
-            score += 2 * (tetrominoPosition[1] - ghostHeight)
-            tetrominoPosition = (tetrominoPosition[0], ghostHeight)
-            fallTimer = 0
-            lockTimer = 0
-        hardDropPressedLastFrame = checkKeys(defaultKeys["hardDrop"])
-    
-        # Manage hold
-        if checkKeys(defaultKeys["hold"]) and not (holdPressedLastFrame or tetrominoAlreadyHeld) and lineClearTimer <= 0:
-            holdCopy = holdQueue
-            holdQueue = currentTetromino
-            initializeNewTetromino(holdCopy)
-            tetrominoAlreadyHeld = True
-        holdPressedLastFrame = checkKeys(defaultKeys["hold"])
-
-        if lineClearTimer <= 0:
-            # Generate new tetrominoes
-            if currentTetromino == -1:
-                while currentTetromino == -1:
-                    nextTetrominoes += [randomGenerator()]
-                    initializeNewTetromino(nextTetrominoes[0])
-                    del nextTetrominoes[0]
-            else:
-                
-                # Handle soft drop, lock delay, locking, game over, line clearing before line clear delay, and level up
-
-                # Check if the current tetromino is on a Surface
-                
-                onFloor = False
-                for i in tetrominoes[currentTetromino][tetrominoRotation]:
-                    if stack[tetrominoPosition[1] + i[1] - 1][tetrominoPosition[0] + i[0]] != -1 or tetrominoPosition[1] + i[1] - 1 < 0:
-                        onFloor = True
-                
-                if not onFloor:
-                    lockTimer = lockDelay
-                if checkKeys(defaultKeys["softDrop"]):
-                    fallTimer -= 20
-                else:
-                    fallTimer -= 1
-                while fallTimer <= 0 and lineClearTimer <= 0:
-                    if onFloor:
-                        if checkKeys(defaultKeys["softDrop"]):
-                            fallTimer += 20
-                        else:
-                            fallTimer += 1
-                        lockTimer -= 1
-                        if inputsUntilLock <= 0:
-                            lockTimer = 0
-                        if lockTimer <= 0:
-                            
-                            # Lock tetromino to Matrix and check for game over conditions
-
-                            for i in tetrominoes[currentTetromino][tetrominoRotation]:
-                                if stack[tetrominoPosition[1] + i[1]][tetrominoPosition[0] + i[0]] != -1:
-                                    return lang["blockOut"]
-                            notLockedOut = False
-                            for i in tetrominoes[currentTetromino][tetrominoRotation]:
-                                stack[tetrominoPosition[1] + i[1]][tetrominoPosition[0] + i[0]] = currentTetromino
-                                if tetrominoPosition[1] + i[1] < 20:
-                                    notLockedOut = True
-                            if not notLockedOut:
-                                return lang["lockOut"]
-
-                            # Recognize T-spins
-                            tetrominoCorners = 0
-                            tetrominoFrontCorners = 0
-                            if tetrominoRotatedDirectlyBeforeLock > 0 and currentTetromino == 6:
-                                for i in range(4):
-                                    if tetrominoPosition[0] + [0, 2, 2, 0][(tetrominoRotation + i) % 4] < 0 or tetrominoPosition[0] + [0, 2, 2, 0][(tetrominoRotation + i) % 4] >= 10 or tetrominoPosition[1] + [2, 2, 0, 0][(tetrominoRotation + i) % 4] < 0 or stack[tetrominoPosition[1] + [2, 2, 0, 0][(tetrominoRotation + i) % 4]][tetrominoPosition[0] + [0, 2, 2, 0][(tetrominoRotation + i) % 4]] != -1:
-                                        tetrominoCorners += 1
-                                        if i < 2:
-                                            tetrominoFrontCorners += 1
-                            if tetrominoCorners >= 3:
-                                if tetrominoFrontCorners >= 2 or tetrominoRotatedDirectlyBeforeLock >= 2:
-                                    tSpin = 2
-                                else:
-                                    tSpin = 1
-                            else:
-                                tSpin = 0
-                            
-                            # Check which lines need to be cleared, if there are any, and whether or not an All Clear has been performed
-
-                            linesToClear = []
-                            allClear = True
-                            for i in range(len(stack)):
-                                linesToClear += [i]
-                                for j in stack[i]:
-                                    if j == -1:
-                                        del linesToClear[-1]
-                                        break
-                                if (len(linesToClear) <= 0 or linesToClear[-1] != i) and allClear == True:
-                                    for j in stack[i]:
-                                        if j != -1:
-                                            allClear = False
-                                            break
-                            
-                            # Manage part of back-to-back and combo
-
-                            if 0 < len(linesToClear) < 4 and tSpin < 1:
-                                backToBack = 0
-                            if backToBack > 0 and len(linesToClear) > 0:
-                                b2bMultiplier = 1.5
-                            else:
-                                b2bMultiplier = 1
-                            if len(linesToClear) > 0:
-                                combo += 1
-                            else:
-                                combo = -1
-                            
-                            # Increase the score by the necessary amount
-                            
-                            pointsScoredByLineClear = 0
-                            for i in range(len(linesToClear) + tSpin // 2):
-                                if allClear:
-                                    pointsScoredByLineClear += i * 2 - 4
-                                    if i < 1:
-                                        pointsScoredByLineClear += 16
-                                    elif i < 3:
-                                        pointsScoredByLineClear += 6
-                                else:
-                                    pointsScoredByLineClear += linesSentFromCombo(i + 1) + 1
-                            if tSpin >= 2:
-                                pointsScoredByLineClear += min(2 * len(linesToClear) + 3, 8)
-                            elif tSpin >= 1:
-                                pointsScoredByLineClear += 1
-                            pointsScoredByLineClear = ((int(pointsScoredByLineClear * b2bMultiplier) + max(combo, 0) - int(allClear) * 4) * 100 * level)
-                            score += pointsScoredByLineClear
-
-                            lineClears += len(linesToClear)
-
-                            if len(linesToClear) > 0:
-                                # Begin line clear delay
-
-                                for i in reversed(linesToClear):
-                                    stack[i] = [-1] * 10
-                                lineClearTimer = 30
-
-                                # Manage rest of back-to-back
-                                if len(linesToClear) >= 4 or tSpin >= 1:
-                                    backToBack += 1
-                            else:
-                                # Initialize the next tetromino
-
-                                nextTetrominoes += [randomGenerator()]
-                                initializeNewTetromino(nextTetrominoes[0])
-                                del nextTetrominoes[0]
-                                tetrominoAlreadyHeld = False
-                    else:
-
-                        # Manage tetromino falling
-
-                        fallTimer += currentGravity * 60
-                        if checkKeys(defaultKeys["softDrop"]):
-                            score += 1
-                        tetrominoPosition = (tetrominoPosition[0], tetrominoPosition[1] - 1)
-                        for i in tetrominoes[currentTetromino][tetrominoRotation]:
-                            fallMinoes += [(currentTetromino, (tetrominoPosition[0] + i[0], tetrominoPosition[1] + i[1]))]
-                        
-                        # Check if the current tetromino is now on a Surface after falling
-
-                        onFloor = False
-                        for i in tetrominoes[currentTetromino][tetrominoRotation]:
-                            if stack[tetrominoPosition[1] + i[1] - 1][tetrominoPosition[0] + i[0]] != -1 or tetrominoPosition[1] + i[1] - 1 < 0:
-                                onFloor = True
-                        
-                        # Reset inputsUntilLock if necessary
-
-                        if tetrominoPosition[1] < lowestTetrominoYPosition:
-                            inputsUntilLock = 15
-                            lowestTetrominoYPosition = tetrominoPosition[1]
+        else:
             
-            # Level up if necessary
+            # Handle soft drop, lock delay, locking, game over, line clearing before line clear delay, and level up
 
-            level = max(level, lineClears // 10 + 1)
-
-        # Manage shifting of tetrominoes
-
-        if checkKeys(defaultKeys["shiftRight"]):
-            autoRepeatTimer -= 1
-            if autoRepeatTimer <= 0:
-                if isDASCharged:
-                    autoRepeatTimer = 4
-                else:
-                    autoRepeatTimer = 18
-                    isDASCharged = True
-                if lineClearTimer <= 0:
-                    shiftTetromino(1)    
-        if checkKeys(defaultKeys["shiftLeft"]):
-            autoRepeatTimer -= 1
-            if autoRepeatTimer <= 0:
-                if isDASCharged:
-                    autoRepeatTimer = 4
-                else:
-                    autoRepeatTimer = 18
-                    isDASCharged = True
-                if lineClearTimer <= 0:
-                    shiftTetromino(-1)
-        if not (checkKeys(defaultKeys["shiftLeft"]) or checkKeys(defaultKeys["shiftRight"])):
-            isDASCharged = False
-            autoRepeatTimer = 1
-
-        # Manage rotation of tetrominoes
-        if lineClearTimer <= 0:
-            if checkKeys(defaultKeys["rotateRight"]):
-                if not rightRotatePressedLastFrame:
-                    rightRotatePressedLastFrame = True
-                    rotateTetromino(1)
+            # Check if the current tetromino is on a Surface
+            
+            onFloor = False
+            for i in tetrominoes[currentTetromino][tetrominoRotation]:
+                if stack[tetrominoPosition[1] + i[1] - 1][tetrominoPosition[0] + i[0]] != -1 or tetrominoPosition[1] + i[1] - 1 < 0:
+                    onFloor = True
+            
+            if not onFloor:
+                lockTimer = lockDelay
+            if checkKeys(defaultKeys["softDrop"]):
+                fallTimer -= 20
             else:
-                rightRotatePressedLastFrame = False
+                fallTimer -= 1
+            while fallTimer <= 0 and lineClearTimer <= 0:
+                if onFloor:
+                    if checkKeys(defaultKeys["softDrop"]):
+                        fallTimer += 20
+                    else:
+                        fallTimer += 1
+                    lockTimer -= 1
+                    if inputsUntilLock <= 0:
+                        lockTimer = 0
+                    if lockTimer <= 0:
+                        
+                        # Lock tetromino to Matrix and check for game over conditions
 
-            if checkKeys(defaultKeys["rotateLeft"]):
-                if not leftRotatePressedLastFrame:
-                    leftRotatePressedLastFrame = True
-                    rotateTetromino(-1)
+                        for i in tetrominoes[currentTetromino][tetrominoRotation]:
+                            if stack[tetrominoPosition[1] + i[1]][tetrominoPosition[0] + i[0]] != -1:
+                                return lang["blockOut"]
+                        notLockedOut = False
+                        for i in tetrominoes[currentTetromino][tetrominoRotation]:
+                            stack[tetrominoPosition[1] + i[1]][tetrominoPosition[0] + i[0]] = currentTetromino
+                            if tetrominoPosition[1] + i[1] < 20:
+                                notLockedOut = True
+                        if not notLockedOut:
+                            return lang["lockOut"]
+
+                        # Recognize T-spins
+                        tetrominoCorners = 0
+                        tetrominoFrontCorners = 0
+                        if tetrominoRotatedDirectlyBeforeLock > 0 and currentTetromino == 6:
+                            for i in range(4):
+                                if tetrominoPosition[0] + [0, 2, 2, 0][(tetrominoRotation + i) % 4] < 0 or tetrominoPosition[0] + [0, 2, 2, 0][(tetrominoRotation + i) % 4] >= 10 or tetrominoPosition[1] + [2, 2, 0, 0][(tetrominoRotation + i) % 4] < 0 or stack[tetrominoPosition[1] + [2, 2, 0, 0][(tetrominoRotation + i) % 4]][tetrominoPosition[0] + [0, 2, 2, 0][(tetrominoRotation + i) % 4]] != -1:
+                                    tetrominoCorners += 1
+                                    if i < 2:
+                                        tetrominoFrontCorners += 1
+                        if tetrominoCorners >= 3:
+                            if tetrominoFrontCorners >= 2 or tetrominoRotatedDirectlyBeforeLock >= 2:
+                                tSpin = 2
+                            else:
+                                tSpin = 1
+                        else:
+                            tSpin = 0
+                        
+                        # Check which lines need to be cleared, if there are any, and whether or not an All Clear has been performed
+
+                        linesToClear = []
+                        allClear = True
+                        for i in range(len(stack)):
+                            linesToClear += [i]
+                            for j in stack[i]:
+                                if j == -1:
+                                    del linesToClear[-1]
+                                    break
+                            if (len(linesToClear) <= 0 or linesToClear[-1] != i) and allClear == True:
+                                for j in stack[i]:
+                                    if j != -1:
+                                        allClear = False
+                                        break
+                        
+                        # Manage part of back-to-back and combo
+
+                        if 0 < len(linesToClear) < 4 and tSpin < 1:
+                            backToBack = 0
+                        if backToBack > 0 and len(linesToClear) > 0:
+                            b2bMultiplier = 1.5
+                        else:
+                            b2bMultiplier = 1
+                        if len(linesToClear) > 0:
+                            combo += 1
+                        else:
+                            combo = -1
+                        
+                        # Increase the score by the necessary amount
+                        
+                        pointsScoredByLineClear = 0
+                        for i in range(len(linesToClear) + tSpin // 2):
+                            if allClear:
+                                pointsScoredByLineClear += i * 2 - 4
+                                if i < 1:
+                                    pointsScoredByLineClear += 16
+                                elif i < 3:
+                                    pointsScoredByLineClear += 6
+                            else:
+                                pointsScoredByLineClear += linesSentFromCombo(i + 1) + 1
+                        if tSpin >= 2:
+                            pointsScoredByLineClear += min(2 * len(linesToClear) + 3, 8)
+                        elif tSpin >= 1:
+                            pointsScoredByLineClear += 1
+                        pointsScoredByLineClear = ((int(pointsScoredByLineClear * b2bMultiplier) + max(combo, 0) - int(allClear) * 4) * 100 * level)
+                        score += pointsScoredByLineClear
+
+                        lineClears += len(linesToClear)
+
+                        if len(linesToClear) > 0:
+                            # Begin line clear delay
+
+                            for i in reversed(linesToClear):
+                                stack[i] = [-1] * 10
+                            lineClearTimer = 30
+
+                            # Manage rest of back-to-back
+                            if len(linesToClear) >= 4 or tSpin >= 1:
+                                backToBack += 1
+                        else:
+                            # Initialize the next tetromino
+
+                            nextTetrominoes += [randomGenerator()]
+                            initializeNewTetromino(nextTetrominoes[0])
+                            del nextTetrominoes[0]
+                            tetrominoAlreadyHeld = False
+                else:
+
+                    # Manage tetromino falling
+
+                    fallTimer += currentGravity * 60
+                    if checkKeys(defaultKeys["softDrop"]):
+                        score += 1
+                    tetrominoPosition = (tetrominoPosition[0], tetrominoPosition[1] - 1)
+                    for i in tetrominoes[currentTetromino][tetrominoRotation]:
+                        fallMinoes += [(currentTetromino, (tetrominoPosition[0] + i[0], tetrominoPosition[1] + i[1]))]
+                    
+                    # Check if the current tetromino is now on a Surface after falling
+
+                    onFloor = False
+                    for i in tetrominoes[currentTetromino][tetrominoRotation]:
+                        if stack[tetrominoPosition[1] + i[1] - 1][tetrominoPosition[0] + i[0]] != -1 or tetrominoPosition[1] + i[1] - 1 < 0:
+                            onFloor = True
+                    
+                    # Reset inputsUntilLock if necessary
+
+                    if tetrominoPosition[1] < lowestTetrominoYPosition:
+                        inputsUntilLock = 15
+                        lowestTetrominoYPosition = tetrominoPosition[1]
+        
+        # Level up if necessary
+
+        level = max(level, lineClears // 10 + 1)
+
+    # Manage shifting of tetrominoes
+
+    if checkKeys(defaultKeys["shiftRight"]):
+        autoRepeatTimer -= 1
+        if autoRepeatTimer <= 0:
+            if isDASCharged:
+                autoRepeatTimer = 4
             else:
-                leftRotatePressedLastFrame = False
-    
-        return None
+                autoRepeatTimer = 18
+                isDASCharged = True
+            if lineClearTimer <= 0:
+                shiftTetromino(1)    
+    if checkKeys(defaultKeys["shiftLeft"]):
+        autoRepeatTimer -= 1
+        if autoRepeatTimer <= 0:
+            if isDASCharged:
+                autoRepeatTimer = 4
+            else:
+                autoRepeatTimer = 18
+                isDASCharged = True
+            if lineClearTimer <= 0:
+                shiftTetromino(-1)
+    if not (checkKeys(defaultKeys["shiftLeft"]) or checkKeys(defaultKeys["shiftRight"])):
+        isDASCharged = False
+        autoRepeatTimer = 1
+
+    # Manage rotation of tetrominoes
+    if lineClearTimer <= 0:
+        if checkKeys(defaultKeys["rotateRight"]):
+            if not rightRotatePressedLastFrame:
+                rightRotatePressedLastFrame = True
+                rotateTetromino(1)
+        else:
+            rightRotatePressedLastFrame = False
+
+        if checkKeys(defaultKeys["rotateLeft"]):
+            if not leftRotatePressedLastFrame:
+                leftRotatePressedLastFrame = True
+                rotateTetromino(-1)
+        else:
+            leftRotatePressedLastFrame = False
+
+    return None
 
 # Formats number of frames into time formatted as mm:ss.cc. For whatever reason this wasn't working as lambda function. also long-line-itis pog
 def formatTime(frames):
