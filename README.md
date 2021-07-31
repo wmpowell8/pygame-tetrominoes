@@ -6,5 +6,3 @@ Pygame tetromino game I poured plenty of hours into. Intended to one day be port
 As for why everything's in Russian... I wasn't able to get other languages to load via JSON. I used Google Translate to create all this Russian text for the game as I do not know the language. Why is the default language Russian? The original concept for the game was invented in Russia, and I wanted it to feel more traditional at first.
 
 This game was originally called "обычный клон тетриса" which means "ordinary Tetris clone" in Russian, but I renamed it due to potential copyright issues. I probably would have been fine though.
-
-This version of the game was originally going to be called "public beta .0", but after reading about versioning conventions, I decided to call it a0.0.0, "a" meaning "alpha".
