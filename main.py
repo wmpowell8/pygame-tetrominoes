@@ -762,6 +762,8 @@ while True:
                 ((20 * i + 1) / 3 + 113, 238),
                 ((20 * i + 1) / 3 + 110, 235),
             ])
+        
+        # Display useful information like score, lines, and time
 
         if state == 8:
             levelDisp = (str(level), "M" + str(level - 20))[int(level > 20)]
@@ -794,6 +796,9 @@ while True:
                 render_text(levelDisp                     , (260,  84 +  12), flashColor())
 
         if state != 10:
+
+            # Display info about whether the player achieved a T-Spin, Back-to-Back, and/or All Clear
+
             if tSpin >= 2:
                 render_text(    lang["tSpin"]                                 , (0,  80 +   0), flashColor(pygame.Color(255, 192, 255)))
             elif tSpin >= 1:
@@ -817,7 +822,6 @@ while True:
     except:
         None
 
-    # "Кадров в секунду" means "frames per second" in Russian
     render_text(lang["fps"] + f" = {1 / lastFrameTime:.1f} --> {1 / lastFrameTotalTime:.1f}", color = flashColor())
 
     # Update the display and FPS value and wait for the next frame to start
