@@ -1,6 +1,9 @@
 import os, sys, pygame, time, random, json
 
 version = "a0.0.0"
+minFrameLength = 1 / 60 # reciprocral of maximum framerate
+delayedAutoShift = .3
+autoRepeat = .0625
 
 defaultLang = {
     "title"        : "pygame-тетромино",
@@ -213,7 +216,7 @@ def initializeNewGame():
     tetrominoBag = []
     tetrominoRotation = 0
     fallTimer = 0
-    lockDelay = 30
+    lockDelay = .5
     lockTimer = lockDelay
     inputsUntilLock = 15
     lowestTetrominoYPosition = 19
@@ -311,13 +314,13 @@ def linesSentFromCombo(combo):
 
 # The master function of the game which updates the current state of the game
 def gameTick(gravity = gravity):
-    global allClear, autoRepeatTimer, backToBack, combo, currentGravity, fallMinoes, fallTimer, hardDropPressedLastFrame, holdPressedLastFrame, holdQueue, inputsUntilLock, isDASCharged, leftRotatePressedLastFrame, level, lineClearTimer, lineClears, linesToClear, lockDelay, lockTimer, lowestTetrominoYPosition, nextTetrominoes, pointsScoredByLineClear, rightRotatePressedLastFrame, score, stack, tetrominoAlreadyHeld, tetrominoPosition, tetrominoRotatedDirectlyBeforeLock, tSpin
+    global allClear, autoRepeatTimer, backToBack, combo, currentGravity, fallMinoes, fallTimer, hardDropPressedLastFrame, holdPressedLastFrame, holdQueue, inputsUntilLock, isDASCharged, lastFrameTotalTime, leftRotatePressedLastFrame, level, lineClearTimer, lineClears, linesToClear, lockDelay, lockTimer, lowestTetrominoYPosition, nextTetrominoes, pointsScoredByLineClear, rightRotatePressedLastFrame, score, stack, tetrominoAlreadyHeld, tetrominoPosition, tetrominoRotatedDirectlyBeforeLock, tSpin
     
     currentGravity = gravity(level)
 
     # Manage line clears during line clear delay
     if lineClearTimer > 0:
-        lineClearTimer -= 1
+        lineClearTimer -= lastFrameTotalTime
         if lineClearTimer <= 0:
             for i in reversed(linesToClear):
                 del stack[i]
@@ -378,16 +381,16 @@ def gameTick(gravity = gravity):
             if not onFloor:
                 lockTimer = lockDelay
             if checkKeys(defaultKeys["softDrop"]):
-                fallTimer -= 20
+                fallTimer -= lastFrameTotalTime * 20
             else:
-                fallTimer -= 1
+                fallTimer -= lastFrameTotalTime
             while fallTimer <= 0 and lineClearTimer <= 0:
                 if onFloor:
                     if checkKeys(defaultKeys["softDrop"]):
-                        fallTimer += 20
+                        fallTimer += lastFrameTotalTime * 20
                     else:
-                        fallTimer += 1
-                    lockTimer -= 1
+                        fallTimer += lastFrameTotalTime
+                    lockTimer -= lastFrameTotalTime
                     if inputsUntilLock <= 0:
                         lockTimer = 0
                     if lockTimer <= 0:
@@ -477,7 +480,7 @@ def gameTick(gravity = gravity):
 
                             for i in reversed(linesToClear):
                                 stack[i] = [-1] * 10
-                            lineClearTimer = 30
+                            lineClearTimer = .5
 
                             # Manage rest of back-to-back
                             if len(linesToClear) >= 4 or tSpin >= 1:
@@ -493,7 +496,7 @@ def gameTick(gravity = gravity):
 
                     # Manage tetromino falling
 
-                    fallTimer += currentGravity * 60
+                    fallTimer += currentGravity
                     if checkKeys(defaultKeys["softDrop"]):
                         score += 1
                     tetrominoPosition = (tetrominoPosition[0], tetrominoPosition[1] - 1)
@@ -520,28 +523,28 @@ def gameTick(gravity = gravity):
     # Manage shifting of tetrominoes
 
     if checkKeys(defaultKeys["shiftRight"]):
-        autoRepeatTimer -= 1
+        autoRepeatTimer -= lastFrameTotalTime
         if autoRepeatTimer <= 0:
             if isDASCharged:
-                autoRepeatTimer = 4
+                autoRepeatTimer = autoRepeat
             else:
-                autoRepeatTimer = 18
+                autoRepeatTimer = delayedAutoShift
                 isDASCharged = True
             if lineClearTimer <= 0:
                 shiftTetromino(1)    
     if checkKeys(defaultKeys["shiftLeft"]):
-        autoRepeatTimer -= 1
+        autoRepeatTimer -= lastFrameTotalTime
         if autoRepeatTimer <= 0:
             if isDASCharged:
-                autoRepeatTimer = 4
+                autoRepeatTimer = autoRepeat
             else:
-                autoRepeatTimer = 18
+                autoRepeatTimer = delayedAutoShift
                 isDASCharged = True
             if lineClearTimer <= 0:
                 shiftTetromino(-1)
     if not (checkKeys(defaultKeys["shiftLeft"]) or checkKeys(defaultKeys["shiftRight"])):
         isDASCharged = False
-        autoRepeatTimer = 1
+        autoRepeatTimer = 0.0
 
     # Manage rotation of tetrominoes
     if lineClearTimer <= 0:
@@ -618,7 +621,7 @@ while True:
     if state in [0, 1]:
         render_text(lang["title"], (10, 50), size = 24)
         render_text(lang["version"] + " " + version, (20, 220), size = 14)
-    if state in [1, 2, 3, 4, 5, 6]:
+    if state in [1, 2, 3, 4, 5, 6]: # Menu states
         updateMenuText()
         for i in range(len(menuOptions[state])):
             render_text({False: "  ", True: "> "}[selectedOption == i] + menuOptions[state][i], (5, 90 + i * 20), size = 18)
@@ -670,7 +673,7 @@ while True:
         if True in pressedKeys:
             state = 1
             selectedOption = 0
-    if state in [7, 8, 9, 10, 11]:
+    if state in [7, 8, 9, 10, 11]: # Game states
     
         gameEnd = (
             (state == 7 and lineClears >= 150 and not endlessGame and lineClearTimer <= 0) or
@@ -681,11 +684,11 @@ while True:
         )
         if gameOver == None and not gameEnd:
             if state == 9:
-                lockDelay = (31 - level) * 26 / 30 + 4
+                lockDelay = (31 - level) * (1 - delayedAutoShift / .5) + delayedAutoShift
                 gameOver = gameTick(lambda level: 0)
             else:
                 if state == 8 and level > 20:
-                    lockDelay = (31 - (level - 20)) * 26 / 30 + 4
+                    lockDelay = (31 - (level - 20)) * (1 - delayedAutoShift / .5) + delayedAutoShift
                 gameOver = gameTick()
             gameFrames += 1
             if lineClearTimer <= 0:
@@ -750,10 +753,10 @@ while True:
         pygame.draw.lines(screen, pygame.Color(255, 255, 255), False, [(110, 20), (110, 220), (210, 220), (210, 20)])
 
         if state in [8, 9]:
-            pygame.draw.line(screen, pygame.Color(255, 255, 255), (100 / 30 * lockDelay + 110, 220), (100 / 30 * lockDelay + 110, 230))
+            pygame.draw.line(screen, pygame.Color(255, 255, 255), (100 / .5 * lockDelay + 110, 220), (100 / .5 * lockDelay + 110, 230))
 
         if lockTimer >= 0:
-            pygame.draw.line(screen, pygame.Color(255, 0, 0), (110, 225), (100 / 30 * lockTimer + 110, 225), 4)
+            pygame.draw.line(screen, pygame.Color(255, 0, 0), (110, 225), (100 / .5 * lockTimer + 110, 225), 4)
         for i in range(inputsUntilLock):
             # pygame.draw.circle(screen, pygame.Color(255, 255, 255), (20 * i / 3 + 340 / 3, 235), 3) # old
             pygame.draw.polygon(screen, pygame.Color(255, 255, 255), [
@@ -818,7 +821,7 @@ while True:
         if gameOver != None:
             render_text(lang["gameOver"] + " (" + gameOver + ")", (5, 120), flashColor(pygame.Color(255, 160, 160)), 18)
         elif gameEnd:
-            render_text(lang["excellent"], (100, 120), flashColor(0, 255, 255), 18)
+            render_text(lang["excellent"], (100, 120), flashColor(pygame.Color(0, 255, 255)), 18)
     except:
         None
 
@@ -827,6 +830,6 @@ while True:
     # Update the display and FPS value and wait for the next frame to start
     pygame.display.flip()
     lastFrameTime = time.perf_counter() - t
-    while time.perf_counter() < t + 1 / 60:
+    while time.perf_counter() < t + minFrameLength:
         None
     lastFrameTotalTime = time.perf_counter() - t
