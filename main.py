@@ -564,9 +564,9 @@ def gameTick(gravity = gravity):
 
     return None
 
-# Formats number of frames into time formatted as mm:ss.cc. For whatever reason this wasn't working as lambda function. also long-line-itis pog
-def formatTime(frames):
-    return str(int(frames / 36000)) + str(int(frames / 3600) % 10) + ":" + str(int(frames / 600) % 6) + str(int(frames / 60) % 10) + "." + str(int(frames / 6) % 10) + str(int(frames / .6) % 10)
+# Formats number of seconds into time formatted as mm:ss.cc. For whatever reason this wasn't working as lambda function. also long-line-itis pog
+def formatTime(secs):
+    return str(int(secs / 600)) + str(int(secs / 60) % 10) + ":" + str(int(secs / 10) % 6) + str(int(secs) % 10) + "." + str(int(secs / .1) % 10) + str(int(secs / .01) % 10)
 
 state = 0
 
@@ -640,8 +640,8 @@ while True:
                 endlessGame = False
             elif state in [7, 8, 9, 10, 11]:
                 initializeNewGame()
-                gameFrames = 0
-                gameFramesExclLCD = 0
+                gameTime = 0
+                gameTimeExclLCD = 0
                 pointsScoredByLineClear = 0
                 if state in [7, 9]:
                     level = startingLevel
@@ -680,19 +680,19 @@ while True:
             (state == 8 and lineClears >= 500 and lineClearTimer <= 0) or
             (state == 9 and lineClears >= 300 and lineClearTimer <= 0) or
             (state == 10 and lineClears >= 40 and lineClearTimer <= 0) or
-            (state == 11 and gameFrames >= 10800)
+            (state == 11 and gameTime >= 10800)
         )
         if gameOver == None and not gameEnd:
             if state == 9:
-                lockDelay = (31 - level) * (1 - delayedAutoShift / .5) + delayedAutoShift
+                lockDelay = (31 - level) / 30 * (.5 - autoRepeat) + autoRepeat
                 gameOver = gameTick(lambda level: 0)
             else:
                 if state == 8 and level > 20:
-                    lockDelay = (31 - (level - 20)) * (1 - delayedAutoShift / .5) + delayedAutoShift
+                    lockDelay = (31 - (level - 20)) / 30 * (.5 - autoRepeat) + autoRepeat
                 gameOver = gameTick()
-            gameFrames += 1
+            gameTime += lastFrameTotalTime
             if lineClearTimer <= 0:
-                gameFramesExclLCD += 1
+                gameTimeExclLCD += lastFrameTotalTime
             if state in [10, 11]:
                 level = 1
         # elif gameOver != None:
@@ -780,10 +780,10 @@ while True:
             render_text(    lang["remaining"]             , (260,  36 +  12), flashColor())
             render_text(    str(max(40 - lineClears, 0))  , (260,  48 +  12), flashColor([None, pygame.Color(255, 192, 192)][int(len(linesToClear) > 0 and lineClearTimer > 0)]))
             render_text(    lang["time"]                  , (260,  72 +  12), flashColor())
-            render_text(    formatTime(gameFrames)        , (260,  84 +  12), flashColor())
+            render_text(    formatTime(gameTime)        , (260,  84 +  12), flashColor())
             render_text(    lang["exclLCD1"]              , (260, 108 +  12), flashColor())
             render_text(    lang["exclLCD2"]              , (260, 120 +  12), flashColor())
-            render_text(    formatTime(gameFramesExclLCD) , (260, 136 +  12), flashColor())
+            render_text(    formatTime(gameTimeExclLCD) , (260, 136 +  12), flashColor())
 
         else:
             render_text(    lang["score"]                 , (260,   0 +  12), flashColor())
@@ -793,7 +793,7 @@ while True:
             if state == 11:
                 render_text(lang["time"]                  , (260,  72 +  12), flashColor())
                 render_text(lang["remaining"]             , (260,  84 +  12), flashColor())
-                render_text(formatTime(10800 - gameFrames), (260,  96 +  12), flashColor())
+                render_text(formatTime(10800 - gameTime), (260,  96 +  12), flashColor())
             else:
                 render_text(lang["level"]                 , (260,  72 +  12), flashColor())
                 render_text(levelDisp                     , (260,  84 +  12), flashColor())
@@ -817,13 +817,11 @@ while True:
             if combo > 0:
                 render_text(    "{ " + str(combo) + " " + lang["combo"] + " }", (0,  80 +  36), flashColor(pygame.Color(192, 192, 255)))
 
-    try:
         if gameOver != None:
             render_text(lang["gameOver"] + " (" + gameOver + ")", (5, 120), flashColor(pygame.Color(255, 160, 160)), 18)
         elif gameEnd:
             render_text(lang["excellent"], (100, 120), flashColor(pygame.Color(0, 255, 255)), 18)
-    except:
-        None
+
 
     render_text(lang["fps"] + f" = {1 / lastFrameTime:.1f} --> {1 / lastFrameTotalTime:.1f}", color = flashColor())
 
