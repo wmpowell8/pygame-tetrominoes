@@ -1,6 +1,6 @@
 import os, sys, pygame, time, random, json
 
-version = "a0.0.0"
+version = "a0.0.1"
 minFrameLength = 1 / 60 # reciprocral of maximum framerate
 delayedAutoShift = .3
 autoRepeat = .0625
@@ -343,9 +343,10 @@ def gameTick(gravity = gravity):
                 for i in tetrominoes[currentTetromino][tetrominoRotation]:
                     fallMinoes += [(currentTetromino, (tetrominoPosition[0] + i[0], ghostHeight + i[1]))]
                 ghostHeight -= 1
-                tetrominoRotatedDirectlyBeforeLock = 0
         if ghostHeight < tetrominoPosition[1]:
             ghostHeight += 1
+            if ghostHeight < tetrominoPosition[1]:
+                tetrominoRotatedDirectlyBeforeLock = 0
         score += 2 * (tetrominoPosition[1] - ghostHeight)
         tetrominoPosition = (tetrominoPosition[0], ghostHeight)
         fallTimer = 0
