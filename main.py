@@ -61,7 +61,9 @@ except Exception as e:
 # Initialize pygame and start and rename the window
 pygame.init()
 size = width, height = 320, 240
-screen = pygame.display.set_mode(size)
+flags = pygame.RESIZABLE
+window = pygame.display.set_mode(size, flags)
+screen = pygame.Surface(size)
 pygame.display.set_caption(lang["title"])
 
 # Tetromino color data
@@ -611,11 +613,18 @@ while True:
     finally:
         pressedKeys = pygame.key.get_pressed()
 
-    # Check if the user has pressed the "X" button on the window
+    # Handle events (Window resized or closed)
+    windowResized = False
+    windowMaximized = False
     for event in pygame.event.get():
+        #print(event)
         if event.type == pygame.QUIT:
             sys.exit()
-    
+        elif event.type == pygame.constants.WINDOWRESIZED:
+            windowResized = True
+        elif event.type == pygame.constants.WINDOWMAXIMIZED:
+            windowMaximized = True
+            
     # Create the black background
     screen.fill(pygame.Color(0, 0, 0))
 
@@ -827,6 +836,13 @@ while True:
     render_text(lang["fps"] + f" = {1 / lastFrameTime:.1f} --> {1 / lastFrameTotalTime:.1f}", color = flashColor())
 
     # Update the display and FPS value and wait for the next frame to start
+    if windowResized:
+        if windowMaximized:
+            windowWidth = max((lambda s, d: s - (s % d))(pygame.display.get_window_size()[0] - size[0], size[0]), size[0])
+        else:
+            windowWidth = max(pygame.display.get_window_size()[0], size[0])
+        pygame.display.set_mode((windowWidth, windowWidth * 3 // 4), flags)
+    pygame.transform.scale(screen, pygame.display.get_window_size(), window)
     pygame.display.flip()
     lastFrameTime = time.perf_counter() - t
     while time.perf_counter() < t + minFrameLength:
