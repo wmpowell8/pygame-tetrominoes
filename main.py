@@ -41,7 +41,7 @@ defaultLang = {
     "excellent"    : "Отлично!"
 }
 try:
-    langDirectory = os.path.dirname(__file__) + "\\lang"
+    langDirectory = os.path.join(os.path.dirname(__file__), "lang")
     langList = [f for f in os.listdir(langDirectory) if os.path.isfile(os.path.join(langDirectory, f))]
     langList = [i for i in langList if i[-5 :] == ".json"]
     print("\n1 русский")
@@ -50,7 +50,7 @@ try:
     if langNum < 0: 
         lang = defaultLang
     else:
-        langFile = open(langDirectory + "\\" + langList[langNum])
+        langFile = open(os.path.join(langDirectory, langList[langNum]))
         lang = json.load(langFile)
         langFile.close()
         print()
