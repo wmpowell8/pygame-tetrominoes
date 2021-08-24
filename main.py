@@ -579,7 +579,7 @@ menuOptions = None
 def updateMenuText():
     global menuOptions
     menuOptions = {
-        1: [lang["classic"], lang["endurance"], lang["extreme"], lang["40line"], lang["3min"],],
+        1: [lang["classic"], lang["endurance"], lang["extreme"], lang["40line"], lang["3min"]],
         2: [lang["back"], lang["startingLevel"] + ": " + str(startingLevel), lang["endless"] + ": " + {False: lang["off"], True: lang["on"]}[endlessGame], lang["startGame"]],
         3: [lang["back"], lang["startGame"]],
         4: [lang["back"], lang["startingLevel"] + ": M" + str(startingLevel), lang["startGame"]],
@@ -629,12 +629,17 @@ while True:
     screen.fill(pygame.Color(0, 0, 0))
 
     if state in [0, 1]:
-        render_text(lang["title"], (10, 50), size = 24)
+        render_text(lang["title"], (10, 50 - 20 * state), size = 24)
         render_text(lang["version"] + " " + version, (20, 220), size = 14)
     if state in [1, 2, 3, 4, 5, 6]: # Menu states
         updateMenuText()
-        for i in range(len(menuOptions[state])):
-            render_text({False: "  ", True: "> "}[selectedOption == i] + menuOptions[state][i], (5, 90 + i * 20), size = 18)
+        minMenuDispIndex = max(0, min(selectedOption - 3, len(menuOptions[state]) - 7))
+        maxMenuDispIndex = min(max(7, selectedOption + 4), len(menuOptions[state]))
+        for i in range(minMenuDispIndex, maxMenuDispIndex):
+            render_text({False: "  ", True: "> "}[selectedOption == i] + menuOptions[state][i], (5, 70 + (i - minMenuDispIndex) * 20), size = 18)
+        pygame.draw.rect(screen, pygame.Color(255, 255, 255), pygame.Rect(width - 15, 70, 6, 140), 1)
+        pygame.draw.rect(screen, pygame.Color(255, 255, 255), pygame.Rect(width - 15, 70 + 140 * minMenuDispIndex / len(menuOptions[state]), 6, 140 * (maxMenuDispIndex - minMenuDispIndex) / len(menuOptions[state])))
+        
         # Indexing into pressedKeys and keysPressedLastFrame is temporary and will be replaced
         if pressedKeys[pygame.constants.K_RETURN] and not keysPressedLastFrame[pygame.constants.K_RETURN]:
             state, selectedOption = {
