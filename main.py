@@ -287,6 +287,7 @@ def shiftTetromino(direction):
         lockTimer = lockDelay
         inputsUntilLock -= 1
         tetrominoRotatedDirectlyBeforeLock = 0
+    return canShift
 
 # Function that rotates a tetromino counterclockwise if direction is -1 or clockwise if it is 1
 def rotateTetromino(direction):
@@ -532,27 +533,23 @@ def gameTick(gravity = gravity):
 
     # Manage shifting of tetrominoes
 
-    if checkKeys(defaultKeys["shiftRight"]):
+    if checkKeys(defaultKeys["shiftLeft"]) or checkKeys(defaultKeys["shiftRight"]):
         autoRepeatTimer -= lastFrameTotalTime
-        if autoRepeatTimer <= 0:
+        tryShift = True
+        while autoRepeatTimer <= 0 and tryShift:
             if isDASCharged:
-                autoRepeatTimer = autoRepeat
+                autoRepeatTimer += autoRepeat
             else:
-                autoRepeatTimer = delayedAutoShift
+                autoRepeatTimer += delayedAutoShift
                 isDASCharged = True
-            if lineClearTimer <= 0:
-                shiftTetromino(1)    
-    if checkKeys(defaultKeys["shiftLeft"]):
-        autoRepeatTimer -= lastFrameTotalTime
-        if autoRepeatTimer <= 0:
-            if isDASCharged:
-                autoRepeatTimer = autoRepeat
+            if lineClearTimer > 0 or (checkKeys(defaultKeys["shiftLeft"]) and checkKeys(defaultKeys["shiftRight"])):
+                tryShift = False
             else:
-                autoRepeatTimer = delayedAutoShift
-                isDASCharged = True
-            if lineClearTimer <= 0:
-                shiftTetromino(-1)
-    if not (checkKeys(defaultKeys["shiftLeft"]) or checkKeys(defaultKeys["shiftRight"])):
+                if checkKeys(defaultKeys["shiftLeft"]):
+                    tryShift = shiftTetromino(-1)
+                else:
+                    tryShift = shiftTetromino(1)
+    else:
         isDASCharged = False
         autoRepeatTimer = 0.0
 
