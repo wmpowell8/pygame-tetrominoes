@@ -58,13 +58,20 @@ except Exception as e:
     print("\n", e, "\n")
     lang = defaultLang
 
+def getLangTxt(key):
+    global lang
+    try:
+        return lang[key]
+    except KeyError:
+        return key
+
 # Initialize pygame and start and rename the window
 pygame.init()
 size = width, height = 320, 240
 flags = pygame.RESIZABLE
 window = pygame.display.set_mode(size, flags)
 screen = pygame.Surface(size)
-pygame.display.set_caption(lang["title"])
+pygame.display.set_caption(getLangTxt("title"))
 
 # Tetromino color data
 tetrominoColors = [
@@ -402,14 +409,14 @@ def gameTick(gravity = gravity):
 
                         for i in tetrominoes[currentTetromino][tetrominoRotation]:
                             if stack[tetrominoPosition[1] + i[1]][tetrominoPosition[0] + i[0]] != -1:
-                                return lang["blockOut"]
+                                return "blockOut"
                         notLockedOut = False
                         for i in tetrominoes[currentTetromino][tetrominoRotation]:
                             stack[tetrominoPosition[1] + i[1]][tetrominoPosition[0] + i[0]] = currentTetromino
                             if tetrominoPosition[1] + i[1] < 20:
                                 notLockedOut = True
                         if not notLockedOut:
-                            return lang["lockOut"]
+                            return "lockOut"
 
                         # Recognize T-spins
                         tetrominoCorners = 0
@@ -579,12 +586,12 @@ menuOptions = None
 def updateMenuText():
     global menuOptions
     menuOptions = {
-        1: [lang["classic"], lang["endurance"], lang["extreme"], lang["40line"], lang["3min"]],
-        2: [lang["back"], lang["startingLevel"] + ": " + str(startingLevel), lang["endless"] + ": " + {False: lang["off"], True: lang["on"]}[endlessGame], lang["startGame"]],
-        3: [lang["back"], lang["startGame"]],
-        4: [lang["back"], lang["startingLevel"] + ": M" + str(startingLevel), lang["startGame"]],
-        5: [lang["back"], lang["startGame"]],
-        6: [lang["back"], lang["startGame"]]
+        1: [getLangTxt("classic"), getLangTxt("endurance"), getLangTxt("extreme"), getLangTxt("40line"), getLangTxt("3min")],
+        2: [getLangTxt("back"), getLangTxt("startingLevel") + ": " + str(startingLevel), getLangTxt("endless") + ": " + {False: getLangTxt("off"), True: getLangTxt("on")}[endlessGame], getLangTxt("startGame")],
+        3: [getLangTxt("back"), getLangTxt("startGame")],
+        4: [getLangTxt("back"), getLangTxt("startingLevel") + ": M" + str(startingLevel), getLangTxt("startGame")],
+        5: [getLangTxt("back"), getLangTxt("startGame")],
+        6: [getLangTxt("back"), getLangTxt("startGame")]
     }
 
 frameParity = 0
@@ -629,8 +636,8 @@ while True:
     screen.fill(pygame.Color(0, 0, 0))
 
     if state in [0, 1]:
-        render_text(lang["title"], (10, 50 - 20 * state), size = 24)
-        render_text(lang["version"] + " " + version, (20, 220), size = 14)
+        render_text(getLangTxt("title"), (10, 50 - 20 * state), size = 24)
+        render_text(getLangTxt("version") + " " + version, (20, 220), size = 14)
     if state in [1, 2, 3, 4, 5, 6]: # Menu states
         updateMenuText()
         minMenuDispIndex = max(0, min(selectedOption - 3, len(menuOptions[state]) - 7))
@@ -684,7 +691,7 @@ while True:
                 if selectedOption == 1:
                     startingLevel = max(startingLevel - 1, 1)
     if state == 0:
-        render_text(lang["pressAnyKey"], (5, 100), size = 18)
+        render_text(getLangTxt("pressAnyKey"), (5, 100), size = 18)
         if True in pressedKeys:
             state = 1
             selectedOption = 0
@@ -744,7 +751,7 @@ while True:
         for i in range(len(nextTetrominoes)):
             for j in tetrominoes[nextTetrominoes[i]][0]:
                 render_mino(nextTetrominoes[i], (11 + j[0], 15 - 3 * i + j[1]))
-        render_text(lang["next"], (220, 20), flashColor(), 10)
+        render_text(getLangTxt("next"), (220, 20), flashColor(), 10)
         if tetrominoAlreadyHeld:
             holdColor = 7
         else:
@@ -752,7 +759,7 @@ while True:
         if holdQueue != -1:
             for i in tetrominoes[holdQueue][0]:
                 render_mino(holdColor, (-5 + i[0], 15 + i[1]))
-        render_text(lang["hold"], (60, 20), flashColor(), 10)
+        render_text(getLangTxt("hold"), (60, 20), flashColor(), 10)
 
         # Draw the playfield grid
         for i in range(30, 220, 10):
@@ -791,54 +798,54 @@ while True:
             levelDisp = str(level)
 
         if state == 10:
-            render_text(    lang["lines"]                 , (260,  24 +  12), flashColor())
-            render_text(    lang["remaining"]             , (260,  36 +  12), flashColor())
-            render_text(    str(max(40 - lineClears, 0))  , (260,  48 +  12), flashColor([None, pygame.Color(255, 192, 192)][int(len(linesToClear) > 0 and lineClearTimer > 0)]))
-            render_text(    lang["time"]                  , (260,  72 +  12), flashColor())
+            render_text(    getLangTxt("lines")         , (260,  24 +  12), flashColor())
+            render_text(    getLangTxt("remaining")     , (260,  36 +  12), flashColor())
+            render_text(    str(max(40 - lineClears, 0)), (260,  48 +  12), flashColor([None, pygame.Color(255, 192, 192)][int(len(linesToClear) > 0 and lineClearTimer > 0)]))
+            render_text(    getLangTxt("time")          , (260,  72 +  12), flashColor())
             render_text(    formatTime(gameTime)        , (260,  84 +  12), flashColor())
-            render_text(    lang["exclLCD1"]              , (260, 108 +  12), flashColor())
-            render_text(    lang["exclLCD2"]              , (260, 120 +  12), flashColor())
+            render_text(    getLangTxt("exclLCD1")      , (260, 108 +  12), flashColor())
+            render_text(    getLangTxt("exclLCD2")      , (260, 120 +  12), flashColor())
             render_text(    formatTime(gameTimeExclLCD) , (260, 136 +  12), flashColor())
 
         else:
-            render_text(    lang["score"]                 , (260,   0 +  12), flashColor())
-            render_text(    str(score)                    , (260,  12 +  12), flashColor([None, pygame.Color(0, 255, 255)][int(pointsScoredByLineClear > 0 and (len(linesToClear) <= 0 or lineClearTimer > 0))]))
-            render_text(    lang["lines"]                 , (260,  36 +  12), flashColor())
-            render_text(    str(         lineClears    )  , (260,  48 +  12), flashColor([None, pygame.Color(0, 255, 255)][int(len(linesToClear) > 0 and lineClearTimer > 0)]))
+            render_text(    getLangTxt("score")         , (260,   0 +  12), flashColor())
+            render_text(    str(score)                  , (260,  12 +  12), flashColor([None, pygame.Color(0, 255, 255)][int(pointsScoredByLineClear > 0 and (len(linesToClear) <= 0 or lineClearTimer > 0))]))
+            render_text(    getLangTxt("lines")         , (260,  36 +  12), flashColor())
+            render_text(    str(         lineClears    ), (260,  48 +  12), flashColor([None, pygame.Color(0, 255, 255)][int(len(linesToClear) > 0 and lineClearTimer > 0)]))
             if state == 11:
-                render_text(lang["time"]                  , (260,  72 +  12), flashColor())
-                render_text(lang["remaining"]             , (260,  84 +  12), flashColor())
+                render_text(getLangTxt("time")          , (260,  72 +  12), flashColor())
+                render_text(getLangTxt("remaining")     , (260,  84 +  12), flashColor())
                 render_text(formatTime(10800 - gameTime), (260,  96 +  12), flashColor())
             else:
-                render_text(lang["level"]                 , (260,  72 +  12), flashColor())
-                render_text(levelDisp                     , (260,  84 +  12), flashColor())
+                render_text(getLangTxt("level")         , (260,  72 +  12), flashColor())
+                render_text(levelDisp                   , (260,  84 +  12), flashColor())
 
         if state != 10:
 
             # Display info about whether the player achieved a T-Spin, Back-to-Back, and/or All Clear
 
             if tSpin >= 2:
-                render_text(    lang["tSpin"]                                 , (0,  80 +   0), flashColor(pygame.Color(255, 192, 255)))
+                render_text(    getLangTxt("tSpin")                                 , (0,  80 +   0), flashColor(pygame.Color(255, 192, 255)))
             elif tSpin >= 1:
-                render_text(    lang["miniTSpin"]                             , (0,  80 +   0), flashColor(pygame.Color(255, 192, 255)))
+                render_text(    getLangTxt("miniTSpin")                             , (0,  80 +   0), flashColor(pygame.Color(255, 192, 255)))
             if len(linesToClear) > 0:
                 if backToBack > 1:
-                    render_text(lang["backToBack"]                            , (0,  80 +  12), flashColor(pygame.Color(128, 255, 128)))
+                    render_text(getLangTxt("backToBack")                            , (0,  80 +  12), flashColor(pygame.Color(128, 255, 128)))
                 if allClear:
-                    render_text(lang["allClear"]                              , (0,  80 +  24), flashColor(pygame.Color(128, 255, 128)))
+                    render_text(getLangTxt("allClear")                              , (0,  80 +  24), flashColor(pygame.Color(128, 255, 128)))
             else:
                 if tSpin > 0:
                     render_text("( +" + str(pointsScoredByLineClear) + " )"   , (0,  80 +  12), flashColor())
             if combo > 0:
-                render_text(    "{ " + str(combo) + " " + lang["combo"] + " }", (0,  80 +  36), flashColor(pygame.Color(192, 192, 255)))
+                render_text(    "{ " + str(combo) + " " + getLangTxt("combo") + " }", (0,  80 +  36), flashColor(pygame.Color(192, 192, 255)))
 
         if gameOver != None:
-            render_text(lang["gameOver"] + " (" + gameOver + ")", (5, 120), flashColor(pygame.Color(255, 160, 160)), 18)
+            render_text(getLangTxt("gameOver") + " (" + getLangTxt(gameOver) + ")", (5, 120), flashColor(pygame.Color(255, 160, 160)), 18)
         elif gameEnd:
-            render_text(lang["excellent"], (100, 120), flashColor(pygame.Color(0, 255, 255)), 18)
+            render_text(getLangTxt("excellent"), (100, 120), flashColor(pygame.Color(0, 255, 255)), 18)
 
 
-    render_text(lang["fps"] + f" = {1 / lastFrameTime:.1f} --> {1 / lastFrameTotalTime:.1f}", color = flashColor())
+    render_text(getLangTxt("fps") + f" = {1 / lastFrameTime:.1f} --> {1 / lastFrameTotalTime:.1f}", color = flashColor())
 
     # Update the display and FPS value and wait for the next frame to start
     if windowResized:
