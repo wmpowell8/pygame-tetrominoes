@@ -40,23 +40,16 @@ defaultLang = {
     "combo"        : "комбо",
     "excellent"    : "Отлично!"
 }
-try:
-    langDirectory = os.path.join(os.path.dirname(__file__), "lang")
+langDirectory = os.path.join(os.path.dirname(__file__), "lang")
+def refreshLangList():
+    global langList
     langList = [f for f in os.listdir(langDirectory) if os.path.isfile(os.path.join(langDirectory, f))]
-    langList = [i for i in langList if i[-5 :] == ".json"]
-    print("\n1 русский")
-    for i in range(len(langList)): print(i + 2, langList[i][: -5])
-    langNum = int(input("\n🌐 --> ")) - 2
-    if langNum < 0: 
-        lang = defaultLang
-    else:
-        langFile = open(os.path.join(langDirectory, langList[langNum]))
-        lang = json.load(langFile)
-        langFile.close()
-        print()
-except Exception as e:
-    print("\n", e, "\n")
-    lang = defaultLang
+    langList = ["русский"] + [i[: -5] for i in langList if i[-5 :] == ".json"]
+    return langList
+    ## legacy language input code
+    #print("\n1 русский")
+    #for i in range(len(langList)): print(i + 2, langList[i][: -5])
+    #langNum = int(input("\n🌐 --> ")) - 2
 
 def getLangTxt(key):
     global lang
@@ -64,6 +57,23 @@ def getLangTxt(key):
         return lang[key]
     except KeyError:
         return key
+
+def updateLang(langNum):
+    global langList, lang
+    try:
+        if langList[langNum] == "русский":
+            lang = defaultLang
+        else:
+            langFile = open(os.path.join(langDirectory, langList[langNum] + ".json"))
+            lang = json.load(langFile)
+            langFile.close()
+    except Exception as e:
+        print("\n", e, "\n")
+        lang = defaultLang
+    pygame.display.set_caption(getLangTxt("title"))
+    return lang
+refreshLangList()
+updateLang(0)
 
 # Initialize pygame and start and rename the window
 pygame.init()
@@ -575,7 +585,8 @@ def gameTick(gravity = gravity):
 def formatTime(secs):
     return str(int(secs / 600)) + str(int(secs / 60) % 10) + ":" + str(int(secs / 10) % 6) + str(int(secs) % 10) + "." + str(int(secs / .1) % 10) + str(int(secs / .01) % 10)
 
-state = 0
+state = 12
+selectedOption = 0
 
 startingLevel = 1
 endlessGame = False
@@ -588,7 +599,8 @@ def updateMenuText():
         3: [getLangTxt("back"), getLangTxt("startGame")],
         4: [getLangTxt("back"), getLangTxt("startingLevel") + ": M" + str(startingLevel), getLangTxt("startGame")],
         5: [getLangTxt("back"), getLangTxt("startGame")],
-        6: [getLangTxt("back"), getLangTxt("startGame")]
+        6: [getLangTxt("back"), getLangTxt("startGame")],
+        12: langList
     }
 
 frameParity = 0
@@ -634,8 +646,9 @@ while True:
 
     if state in [0, 1]:
         render_text(getLangTxt("title"), (10, 50 - 20 * state), size = 24)
+    if state in [0, 1, 12]:
         render_text(getLangTxt("version") + " " + version, (20, 220), size = 14)
-    if state in [1, 2, 3, 4, 5, 6]: # Menu states
+    if state in [1, 2, 3, 4, 5, 6, 12]: # Menu states
         updateMenuText()
         minMenuDispIndex = max(0, min(selectedOption - 3, len(menuOptions[state]) - 7))
         maxMenuDispIndex = min(max(7, selectedOption + 4), len(menuOptions[state]))
@@ -646,13 +659,16 @@ while True:
         
         # Indexing into pressedKeys and keysPressedLastFrame is temporary and will be replaced
         if pressedKeys[pygame.constants.K_RETURN] and not keysPressedLastFrame[pygame.constants.K_RETURN]:
+            if state in [12]:
+                updateLang(selectedOption)
             state, selectedOption = {
                 1: [(2, 3), (3, 1), (4, 2), (5, 1), (6, 1)],
                 2: [(1, 0), (2, 1), (2, 2), (7, 0)],
                 3: [(1, 1), (8, 0)],
                 4: [(1, 2), (4, 1), (9, 0)],
                 5: [(1, 3), (10, 0)],
-                6: [(1, 4), (11, 0)]
+                6: [(1, 4), (11, 0)],
+                12: [(1, 0) for i in langList]
             }[state][selectedOption]
             if state in [2, 4]:
                 startingLevel = 1
