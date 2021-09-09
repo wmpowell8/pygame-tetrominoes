@@ -31,5 +31,9 @@
     "backToBack"   : "{ back-to-back }",
     "allClear"     : "{ all clear }",
     "combo"        : "combo",
-    "excellent"    : "Excellent!"
+    "excellent"    : "Excellent!",
+    "paused"       : "paused",
+    "continue"     : "continue",
+    "retry"        : "retry",
+    "exit"         : "exit"
 }

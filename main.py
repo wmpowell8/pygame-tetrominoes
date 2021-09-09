@@ -38,7 +38,11 @@ defaultLang = {
     "backToBack"   : "{ спина к спине }",
     "allClear"     : "{ все чисто }",
     "combo"        : "комбо",
-    "excellent"    : "Отлично!"
+    "excellent"    : "Отлично!",
+    "paused"       : "приостановлена",
+    "continue"     : "продолжить",
+    "retry"        : "повторить",
+    "exit"         : "выйти"
 }
 langDirectory = os.path.join(os.path.dirname(__file__), "lang")
 def refreshLangList():
@@ -201,7 +205,13 @@ defaultKeys = {
     "hardDrop"   : [pygame.constants.K_SPACE,  pygame.constants.K_KP8],
     "shiftLeft"  : [pygame.constants.K_LEFT,   pygame.constants.K_KP4],
     "softDrop"   : [pygame.constants.K_DOWN,   pygame.constants.K_KP2],
-    "shiftRight" : [pygame.constants.K_RIGHT,  pygame.constants.K_KP6]
+    "shiftRight" : [pygame.constants.K_RIGHT,  pygame.constants.K_KP6],
+    "menuSelect" : [pygame.constants.K_RETURN],
+    "menuDown"   : [pygame.constants.K_DOWN,   pygame.constants.K_s],
+    "menuUp"     : [pygame.constants.K_UP,     pygame.constants.K_w],
+    "menuRight"  : [pygame.constants.K_RIGHT,  pygame.constants.K_d],
+    "menuLeft"   : [pygame.constants.K_LEFT,   pygame.constants.K_a],
+    "pause"      : [pygame.constants.K_ESCAPE]
 }
 
 def checkKeys(keys, keyData = None):
@@ -209,7 +219,7 @@ def checkKeys(keys, keyData = None):
     if keyData == None:
         keyData = pressedKeys
     for i in keys:
-        if pressedKeys[i]: # 0 <= i < len(pressedKeys) and
+        if keyData[i]: # 0 <= i < len(pressedKeys) and
             return True
     return False
 
@@ -250,14 +260,10 @@ def initializeNewGame():
     tSpin = 0
     allClear = False
 
-    # Variables related to tetromino manipulation (TODO: replace "pressed last frame" variables with checkKeys(..., keysPressedLastFrame))
+    # Variables related to tetromino manipulation
 
     isDASCharged = False
     autoRepeatTimer = 1
-    leftRotatePressedLastFrame = False
-    rightRotatePressedLastFrame = False
-    holdPressedLastFrame = False
-    hardDropPressedLastFrame = False
     tetrominoRotatedDirectlyBeforeLock = 0
 
 # Function that manages the "7-bag" Random Generator that is standard with modern versions of this classic game
@@ -334,7 +340,7 @@ def linesSentFromCombo(combo):
 
 # The master function of the game which updates the current state of the game
 def gameTick(gravity = gravity):
-    global allClear, autoRepeatTimer, backToBack, combo, currentGravity, fallMinoes, fallTimer, hardDropPressedLastFrame, holdPressedLastFrame, holdQueue, inputsUntilLock, isDASCharged, lastFrameTotalTime, leftRotatePressedLastFrame, level, lineClearTimer, lineClears, linesToClear, lockDelay, lockTimer, lowestTetrominoYPosition, nextTetrominoes, pointsScoredByLineClear, rightRotatePressedLastFrame, score, stack, tetrominoAlreadyHeld, tetrominoPosition, tetrominoRotatedDirectlyBeforeLock, tSpin
+    global allClear, autoRepeatTimer, backToBack, combo, currentGravity, fallMinoes, fallTimer, holdQueue, inputsUntilLock, isDASCharged, lastFrameTotalTime, level, lineClearTimer, lineClears, linesToClear, lockDelay, lockTimer, lowestTetrominoYPosition, nextTetrominoes, pointsScoredByLineClear, score, stack, tetrominoAlreadyHeld, tetrominoPosition, tetrominoRotatedDirectlyBeforeLock, tSpin
     
     currentGravity = gravity(level)
 
@@ -351,7 +357,7 @@ def gameTick(gravity = gravity):
             tetrominoAlreadyHeld = False
 
     # Manage hard drop
-    if checkKeys(defaultKeys["hardDrop"]) and not hardDropPressedLastFrame and lineClearTimer <= 0:
+    if checkKeys(defaultKeys["hardDrop"]) and not checkKeys(defaultKeys["hardDrop"], keysPressedLastFrame) and lineClearTimer <= 0:
         ghostHeight = tetrominoPosition[1]
         ghostTouchingGround = False
         while not ghostTouchingGround:
@@ -371,15 +377,13 @@ def gameTick(gravity = gravity):
         tetrominoPosition = (tetrominoPosition[0], ghostHeight)
         fallTimer = 0
         lockTimer = 0
-    hardDropPressedLastFrame = checkKeys(defaultKeys["hardDrop"])
 
     # Manage hold
-    if checkKeys(defaultKeys["hold"]) and not (holdPressedLastFrame or tetrominoAlreadyHeld) and lineClearTimer <= 0:
+    if checkKeys(defaultKeys["hold"]) and not (checkKeys(defaultKeys["hold"], keysPressedLastFrame) or tetrominoAlreadyHeld) and lineClearTimer <= 0:
         holdCopy = holdQueue
         holdQueue = currentTetromino
         initializeNewTetromino(holdCopy)
         tetrominoAlreadyHeld = True
-    holdPressedLastFrame = checkKeys(defaultKeys["hold"])
 
     if lineClearTimer <= 0:
         # Generate new tetrominoes
@@ -565,19 +569,11 @@ def gameTick(gravity = gravity):
 
     # Manage rotation of tetrominoes
     if lineClearTimer <= 0:
-        if checkKeys(defaultKeys["rotateRight"]):
-            if not rightRotatePressedLastFrame:
-                rightRotatePressedLastFrame = True
-                rotateTetromino(1)
-        else:
-            rightRotatePressedLastFrame = False
+        if checkKeys(defaultKeys["rotateRight"]) and not checkKeys(defaultKeys["rotateRight"], keysPressedLastFrame):
+            rotateTetromino(1)
 
-        if checkKeys(defaultKeys["rotateLeft"]):
-            if not leftRotatePressedLastFrame:
-                leftRotatePressedLastFrame = True
-                rotateTetromino(-1)
-        else:
-            leftRotatePressedLastFrame = False
+        if checkKeys(defaultKeys["rotateLeft"]) and not checkKeys(defaultKeys["rotateLeft"], keysPressedLastFrame):
+            rotateTetromino(-1)
 
     return None
 
@@ -625,7 +621,7 @@ while True:
     try:
         keysPressedLastFrame = pressedKeys
     except NameError:
-        keysPressedLastFrame = []
+        keysPressedLastFrame = [0] * 25
     finally:
         pressedKeys = pygame.key.get_pressed()
 
@@ -657,8 +653,7 @@ while True:
         pygame.draw.rect(screen, pygame.Color(255, 255, 255), pygame.Rect(width - 15, 70, 6, 140), 1)
         pygame.draw.rect(screen, pygame.Color(255, 255, 255), pygame.Rect(width - 15, 70 + 140 * minMenuDispIndex / len(menuOptions[state]), 6, 140 * (maxMenuDispIndex - minMenuDispIndex) / len(menuOptions[state])))
         
-        # Indexing into pressedKeys and keysPressedLastFrame is temporary and will be replaced
-        if pressedKeys[pygame.constants.K_RETURN] and not keysPressedLastFrame[pygame.constants.K_RETURN]:
+        if checkKeys(defaultKeys["menuSelect"]) and not checkKeys(defaultKeys["menuSelect"], keysPressedLastFrame):
             if state in [12]:
                 updateLang(selectedOption)
             state, selectedOption = {
@@ -681,11 +676,11 @@ while True:
                 if state in [7, 9]:
                     level = startingLevel
                 gameOver = None
-        elif pressedKeys[pygame.constants.K_DOWN] and not keysPressedLastFrame[pygame.constants.K_DOWN]:
+        elif checkKeys(defaultKeys["menuDown"]) and not checkKeys(defaultKeys["menuDown"], keysPressedLastFrame):
             selectedOption = (selectedOption + 1) % len(menuOptions[state])
-        elif pressedKeys[pygame.constants.K_UP] and not keysPressedLastFrame[pygame.constants.K_UP]:
+        elif checkKeys(defaultKeys["menuUp"]) and not checkKeys(defaultKeys["menuUp"], keysPressedLastFrame):
             selectedOption = (selectedOption - 1) % len(menuOptions[state]) 
-        elif pressedKeys[pygame.constants.K_RIGHT] and not keysPressedLastFrame[pygame.constants.K_RIGHT]:
+        elif checkKeys(defaultKeys["menuRight"]) and not checkKeys(defaultKeys["menuRight"], keysPressedLastFrame):
             if state == 2:
                 if selectedOption == 1:
                     startingLevel = min(startingLevel + 1, 15)
@@ -694,7 +689,7 @@ while True:
             if state == 4:
                 if selectedOption == 1:
                     startingLevel = min(startingLevel + 1, 30)
-        elif pressedKeys[pygame.constants.K_LEFT] and not keysPressedLastFrame[pygame.constants.K_LEFT]:
+        elif checkKeys(defaultKeys["menuLeft"]) and not checkKeys(defaultKeys["menuLeft"], keysPressedLastFrame):
             if state == 2:
                 if selectedOption == 1:
                     startingLevel = max(startingLevel - 1, 1)
