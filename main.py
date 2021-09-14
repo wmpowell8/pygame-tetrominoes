@@ -260,6 +260,11 @@ def initializeNewGame():
     tSpin = 0
     allClear = False
 
+    if nextTetrominoes[0] == -1:
+        while nextTetrominoes[0] == -1:
+            nextTetrominoes += [randomGenerator()]
+            del nextTetrominoes[0]
+
     # Variables related to tetromino manipulation
 
     isDASCharged = False
@@ -581,23 +586,29 @@ def gameTick(gravity = gravity):
 def formatTime(secs):
     return str(int(secs / 600)) + str(int(secs / 60) % 10) + ":" + str(int(secs / 10) % 6) + str(int(secs) % 10) + "." + str(int(secs / .1) % 10) + str(int(secs / .01) % 10)
 
-state = 12
+state = 1
+gameType = 0
 selectedOption = 0
 
 startingLevel = 1
 endlessGame = False
 menuOptions = None
 def updateMenuText():
-    global menuOptions
+    global menuOptions, state
     menuOptions = {
-        1: [getLangTxt("classic"), getLangTxt("endurance"), getLangTxt("extreme"), getLangTxt("40line"), getLangTxt("3min")],
-        2: [getLangTxt("back"), getLangTxt("startingLevel") + ": " + str(startingLevel), getLangTxt("endless") + ": " + {False: getLangTxt("off"), True: getLangTxt("on")}[endlessGame], getLangTxt("startGame")],
-        3: [getLangTxt("back"), getLangTxt("startGame")],
-        4: [getLangTxt("back"), getLangTxt("startingLevel") + ": M" + str(startingLevel), getLangTxt("startGame")],
-        5: [getLangTxt("back"), getLangTxt("startGame")],
-        6: [getLangTxt("back"), getLangTxt("startGame")],
-        12: langList
-    }
+        1: langList,
+        2: [getLangTxt("classic"), getLangTxt("endurance"), getLangTxt("extreme"), getLangTxt("40line"), getLangTxt("3min")],
+        5: [getLangTxt("continue"), getLangTxt("retry"), getLangTxt("exit")]
+    }[state]
+def updateModeMenuText():
+    global menuOptions, gameType
+    menuOptions = [
+        [getLangTxt("back"), getLangTxt("startingLevel") + ": " + str(startingLevel), getLangTxt("endless") + ": " + {False: getLangTxt("off"), True: getLangTxt("on")}[endlessGame], getLangTxt("startGame")],
+        [getLangTxt("back"), getLangTxt("startGame")],
+        [getLangTxt("back"), getLangTxt("startingLevel") + ": M" + str(startingLevel), getLangTxt("startGame")],
+        [getLangTxt("back"), getLangTxt("startGame")],
+        [getLangTxt("back"), getLangTxt("startGame")]
+    ][gameType]
 
 frameParity = 0
 def flashColor(color = None):
@@ -640,90 +651,107 @@ while True:
     # Create the black background
     screen.fill(pygame.Color(0, 0, 0))
 
-    if state in [0, 1]:
-        render_text(getLangTxt("title"), (10, 50 - 20 * state), size = 24)
-    if state in [0, 1, 12]:
+    if state in [0, 2]:
+        render_text(getLangTxt("title"), (10, 50 - 20 * {0: 0, 2: 1}[state]), size = 24)
+    if state in [0, 1, 2]:
         render_text(getLangTxt("version") + " " + version, (20, 220), size = 14)
-    if state in [1, 2, 3, 4, 5, 6, 12]: # Menu states
-        updateMenuText()
-        minMenuDispIndex = max(0, min(selectedOption - 3, len(menuOptions[state]) - 7))
-        maxMenuDispIndex = min(max(7, selectedOption + 4), len(menuOptions[state]))
+    if state in [1, 2, 3, 5]: # Menu states
+        if state == 3:
+            updateModeMenuText()
+        else:
+            updateMenuText()
+        minMenuDispIndex = max(0, min(selectedOption - 3, len(menuOptions) - 7))
+        maxMenuDispIndex = min(max(7, selectedOption + 4), len(menuOptions))
         for i in range(minMenuDispIndex, maxMenuDispIndex):
-            render_text({False: "  ", True: "> "}[selectedOption == i] + menuOptions[state][i], (5, 70 + (i - minMenuDispIndex) * 20), size = 18)
+            render_text({False: "  ", True: "> "}[selectedOption == i] + menuOptions[i], (5, 70 + (i - minMenuDispIndex) * 20), size = 18, color = flashColor())
         pygame.draw.rect(screen, pygame.Color(255, 255, 255), pygame.Rect(width - 15, 70, 6, 140), 1)
-        pygame.draw.rect(screen, pygame.Color(255, 255, 255), pygame.Rect(width - 15, 70 + 140 * minMenuDispIndex / len(menuOptions[state]), 6, 140 * (maxMenuDispIndex - minMenuDispIndex) / len(menuOptions[state])))
+        pygame.draw.rect(screen, pygame.Color(255, 255, 255), pygame.Rect(width - 15, 70 + 140 * minMenuDispIndex / len(menuOptions), 6, 140 * (maxMenuDispIndex - minMenuDispIndex) / len(menuOptions)))
         
         if checkKeys(defaultKeys["menuSelect"]) and not checkKeys(defaultKeys["menuSelect"], keysPressedLastFrame):
-            if state in [12]:
-                updateLang(selectedOption)
-            state, selectedOption = {
-                1: [(2, 3), (3, 1), (4, 2), (5, 1), (6, 1)],
-                2: [(1, 0), (2, 1), (2, 2), (7, 0)],
-                3: [(1, 1), (8, 0)],
-                4: [(1, 2), (4, 1), (9, 0)],
-                5: [(1, 3), (10, 0)],
-                6: [(1, 4), (11, 0)],
-                12: [(1, 0) for i in langList]
-            }[state][selectedOption]
-            if state in [2, 4]:
+            prevState = state
+            prevOption = selectedOption
+            if state == 3:
+                state, gameType, selectedOption = [
+                    [(2, 0, 0), (3, 0, 1), (3, 0, 2), (4, 0, 0)],
+                    [(2, 0, 1), (3, 1, 0)],
+                    [(2, 0, 2), (4, 0, 1), (4, 2, 0)],
+                    [(2, 0, 3), (4, 3, 0)],
+                    [(2, 0, 4), (4, 4, 0)]
+                ][gameType][selectedOption]
+            else:
+                state, gameType, selectedOption = {
+                    1: [(2, 0, 0) for i in langList],
+                    2: [(3, 0, 3), (3, 1, 1), (3, 2, 2), (3, 3, 1), (3, 4, 1)],
+                    5: [(4, gameType, 0), (4, gameType, 0), (3, gameType, 0)]
+                }[state][selectedOption]
+            if prevState in [1]:
+                updateLang(prevOption)
+            if prevState in [5] and prevOption == 2:
+                currentGravity = 1
+            if state in [3] and gameType in [0, 2]:
                 startingLevel = 1
                 endlessGame = False
-            elif state in [7, 8, 9, 10, 11]:
+            elif state in [4] and not (prevState == 5 and prevOption == 0):
                 initializeNewGame()
                 gameTime = 0
                 gameTimeExclLCD = 0
                 pointsScoredByLineClear = 0
-                if state in [7, 9]:
+                if gameType in [0, 2]:
                     level = startingLevel
                 gameOver = None
         elif checkKeys(defaultKeys["menuDown"]) and not checkKeys(defaultKeys["menuDown"], keysPressedLastFrame):
-            selectedOption = (selectedOption + 1) % len(menuOptions[state])
+            selectedOption = (selectedOption + 1) % len(menuOptions)
         elif checkKeys(defaultKeys["menuUp"]) and not checkKeys(defaultKeys["menuUp"], keysPressedLastFrame):
-            selectedOption = (selectedOption - 1) % len(menuOptions[state]) 
+            selectedOption = (selectedOption - 1) % len(menuOptions) 
         elif checkKeys(defaultKeys["menuRight"]) and not checkKeys(defaultKeys["menuRight"], keysPressedLastFrame):
-            if state == 2:
-                if selectedOption == 1:
-                    startingLevel = min(startingLevel + 1, 15)
-                elif selectedOption == 2:
-                    endlessGame = not endlessGame
-            if state == 4:
-                if selectedOption == 1:
-                    startingLevel = min(startingLevel + 1, 30)
+            if state == 3:
+                if gameType == 0:
+                    if selectedOption == 1:
+                        startingLevel = min(startingLevel + 1, 15)
+                    elif selectedOption == 2:
+                        endlessGame = not endlessGame
+                if gameType == 2:
+                    if selectedOption == 1:
+                        startingLevel = min(startingLevel + 1, 30)
         elif checkKeys(defaultKeys["menuLeft"]) and not checkKeys(defaultKeys["menuLeft"], keysPressedLastFrame):
-            if state == 2:
-                if selectedOption == 1:
-                    startingLevel = max(startingLevel - 1, 1)
-                elif selectedOption == 2:
-                    endlessGame = not endlessGame
-            if state == 4:
-                if selectedOption == 1:
-                    startingLevel = max(startingLevel - 1, 1)
+            if state == 3:
+                if gameType == 0:
+                    if selectedOption == 1:
+                        startingLevel = max(startingLevel - 1, 1)
+                    elif selectedOption == 2:
+                        endlessGame = not endlessGame
+                if gameType == 2:
+                    if selectedOption == 1:
+                        startingLevel = max(startingLevel - 1, 1)
     if state == 0:
         render_text(getLangTxt("pressAnyKey"), (5, 100), size = 18)
         if True in pressedKeys:
-            state = 1
+            state = 2
             selectedOption = 0
-    if state in [7, 8, 9, 10, 11]: # Game states
+    if state in [4]: # Game state
     
         gameEnd = (
-            (state == 7 and lineClears >= 150 and not endlessGame and lineClearTimer <= 0) or
-            (state == 8 and lineClears >= 500 and lineClearTimer <= 0) or
-            (state == 9 and lineClears >= 300 and lineClearTimer <= 0) or
-            (state == 10 and lineClears >= 40 and lineClearTimer <= 0) or
-            (state == 11 and gameTime >= 10800)
+            (gameType == 0 and lineClears >= 150 and not endlessGame and lineClearTimer <= 0) or
+            (gameType == 1 and lineClears >= 500 and lineClearTimer <= 0) or
+            (gameType == 2 and lineClears >= 300 and lineClearTimer <= 0) or
+            (gameType == 3 and lineClears >= 40 and lineClearTimer <= 0) or
+            (gameType == 4 and gameTime >= 180)
         )
-        if gameOver == None and not gameEnd:
-            if state == 9:
+        if checkKeys(defaultKeys["pause"]) and not checkKeys(defaultKeys["pause"], keysPressedLastFrame):
+            state = 5
+            selectedOption = 0
+        elif gameOver == None and not gameEnd:
+            if gameType == 2:
                 lockDelay = (31 - level) / 30 * (.5 - autoRepeat) + autoRepeat
                 gameOver = gameTick(lambda level: 0)
             else:
-                if state == 8 and level > 20:
+                if gameType == 1 and level > 20:
                     lockDelay = (31 - (level - 20)) / 30 * (.5 - autoRepeat) + autoRepeat
                 gameOver = gameTick()
             gameTime += lastFrameTotalTime
             if lineClearTimer <= 0:
                 gameTimeExclLCD += lastFrameTotalTime
-            if state in [10, 11]:
+            if gameType in [3, 4]:
                 level = 1
         # elif gameOver != None:
         #     i = random.randint(0, len(stack) - 1)
@@ -775,14 +803,14 @@ while True:
         for i in range(120, 210, 10):
             pygame.draw.line(screen, pygame.Color(64, 64, 64, 128), (i, 20), (i, 220))
 
-        if len(linesToClear) > 0 and lineClearTimer > 0 and state != 10:
+        if len(linesToClear) > 0 and lineClearTimer > 0 and gameType != 3:
             render_text(str(pointsScoredByLineClear), (145, 210 - 10 * linesToClear[0]), flashColor(), 10)
 
         # Draw the "tetrion"
         pygame.draw.line(screen, pygame.Color(128, 128, 128), (110, 20), (210, 20))
         pygame.draw.lines(screen, pygame.Color(255, 255, 255), False, [(110, 20), (110, 220), (210, 220), (210, 20)])
 
-        if state in [8, 9]:
+        if gameType in [1, 2]:
             pygame.draw.line(screen, pygame.Color(255, 255, 255), (100 / .5 * lockDelay + 110, 220), (100 / .5 * lockDelay + 110, 230))
 
         if lockTimer >= 0:
@@ -798,14 +826,14 @@ while True:
         
         # Display useful information like score, lines, and time
 
-        if state == 8:
+        if gameType == 1:
             levelDisp = (str(level), "M" + str(level - 20))[int(level > 20)]
-        elif state == 9:
+        elif gameType == 2:
             levelDisp = "M" + str(level)
         else:
             levelDisp = str(level)
 
-        if state == 10:
+        if gameType == 3:
             render_text(    getLangTxt("lines")         , (260,  24 +  12), flashColor())
             render_text(    getLangTxt("remaining")     , (260,  36 +  12), flashColor())
             render_text(    str(max(40 - lineClears, 0)), (260,  48 +  12), flashColor([None, pygame.Color(255, 192, 192)][int(len(linesToClear) > 0 and lineClearTimer > 0)]))
@@ -820,15 +848,15 @@ while True:
             render_text(    str(score)                  , (260,  12 +  12), flashColor([None, pygame.Color(0, 255, 255)][int(pointsScoredByLineClear > 0 and (len(linesToClear) <= 0 or lineClearTimer > 0))]))
             render_text(    getLangTxt("lines")         , (260,  36 +  12), flashColor())
             render_text(    str(         lineClears    ), (260,  48 +  12), flashColor([None, pygame.Color(0, 255, 255)][int(len(linesToClear) > 0 and lineClearTimer > 0)]))
-            if state == 11:
+            if gameType == 4:
                 render_text(getLangTxt("time")          , (260,  72 +  12), flashColor())
                 render_text(getLangTxt("remaining")     , (260,  84 +  12), flashColor())
-                render_text(formatTime(10800 - gameTime), (260,  96 +  12), flashColor())
+                render_text(formatTime(180 - gameTime)  , (260,  96 +  12), flashColor())
             else:
                 render_text(getLangTxt("level")         , (260,  72 +  12), flashColor())
                 render_text(levelDisp                   , (260,  84 +  12), flashColor())
 
-        if state != 10:
+        if gameType != 3:
 
             # Display info about whether the player achieved a T-Spin, Back-to-Back, and/or All Clear
 
@@ -853,7 +881,7 @@ while True:
             render_text(getLangTxt("excellent"), (100, 120), flashColor(pygame.Color(0, 255, 255)), 18)
 
 
-    render_text(getLangTxt("fps") + f" = {1 / lastFrameTime:.1f} --> {1 / lastFrameTotalTime:.1f}", color = flashColor())
+    render_text(getLangTxt("fps") + f" = {1 / lastFrameTime:.1f} --> {1 / lastFrameTotalTime:.1f}")
 
     # Update the display and FPS value and wait for the next frame to start
     if windowResized:
