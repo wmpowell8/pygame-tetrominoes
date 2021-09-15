@@ -651,6 +651,7 @@ while True:
     # Create the black background
     screen.fill(pygame.Color(0, 0, 0))
 
+    unpausedThisFrame = False
     if state in [0, 2]:
         render_text(getLangTxt("title"), (10, 50 - 20 * {0: 0, 2: 1}[state]), size = 24)
     if state in [0, 1, 2]:
@@ -699,6 +700,9 @@ while True:
                 if gameType in [0, 2]:
                     level = startingLevel
                 gameOver = None
+        elif checkKeys(defaultKeys["pause"]) and not checkKeys(defaultKeys["pause"], keysPressedLastFrame) and state == 5:
+            state = 4
+            unpausedThisFrame = True
         elif checkKeys(defaultKeys["menuDown"]) and not checkKeys(defaultKeys["menuDown"], keysPressedLastFrame):
             selectedOption = (selectedOption + 1) % len(menuOptions)
         elif checkKeys(defaultKeys["menuUp"]) and not checkKeys(defaultKeys["menuUp"], keysPressedLastFrame):
@@ -737,7 +741,7 @@ while True:
             (gameType == 3 and lineClears >= 40 and lineClearTimer <= 0) or
             (gameType == 4 and gameTime >= 180)
         )
-        if checkKeys(defaultKeys["pause"]) and not checkKeys(defaultKeys["pause"], keysPressedLastFrame):
+        if checkKeys(defaultKeys["pause"]) and not checkKeys(defaultKeys["pause"], keysPressedLastFrame) and not unpausedThisFrame:
             state = 5
             selectedOption = 0
         elif gameOver == None and not gameEnd:
