@@ -35,5 +35,10 @@
     "paused"       : "paused",
     "continue"     : "continue",
     "retry"        : "retry",
-    "exit"         : "exit"
+    "exit"         : "exit",
+    "settings"     : "settings",
+    "handling"     : "handling",
+    "DAS"          : "DAS delay",
+    "ARR"          : "DAS speed (ARR)",
+    "langSelect"   : "language select"
 }

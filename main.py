@@ -3,7 +3,7 @@ import os, sys, pygame, time, random, json
 version = "a0.0.1"
 minFrameLength = 1 / 60 # reciprocral of maximum framerate
 delayedAutoShift = .3
-autoRepeat = .0625
+autoRepeat = .06
 
 defaultLang = {
     "title"        : "pygame-тетромино",
@@ -42,7 +42,12 @@ defaultLang = {
     "paused"       : "приостановлена",
     "continue"     : "продолжить",
     "retry"        : "повторить",
-    "exit"         : "выйти"
+    "exit"         : "выйти",
+    "settings"     : "настройки",
+    "handling"     : "обработка",
+    "DAS"          : "Задержка ОАС",
+    "ARR"          : "Скорость ОАС",
+    "langSelect"   : "выбор языка"
 }
 langDirectory = os.path.join(os.path.dirname(__file__), "lang")
 def refreshLangList():
@@ -62,8 +67,9 @@ def getLangTxt(key):
     except KeyError:
         return key
 
-def updateLang(langNum):
-    global langList, lang
+def updateLang(aLangNum):
+    global langList, lang, langNum
+    langNum = aLangNum
     try:
         if langList[langNum] == "русский":
             lang = defaultLang
@@ -597,8 +603,11 @@ def updateMenuText():
     global menuOptions, state
     menuOptions = {
         1: langList,
-        2: [getLangTxt("classic"), getLangTxt("endurance"), getLangTxt("extreme"), getLangTxt("40line"), getLangTxt("3min")],
-        5: [getLangTxt("continue"), getLangTxt("retry"), getLangTxt("exit")]
+        2: [getLangTxt("classic"), getLangTxt("endurance"), getLangTxt("extreme"), getLangTxt("40line"), getLangTxt("3min"), getLangTxt("settings")],
+        5: [getLangTxt("continue"), getLangTxt("retry"), getLangTxt("exit")],
+        6: [getLangTxt("back"), getLangTxt("handling"), getLangTxt("langSelect")],
+        7: [getLangTxt("back"), getLangTxt("DAS") + ": " + str(int(delayedAutoShift * 1000 + .0000000001)) + "ms", getLangTxt("ARR") + ": " + str(int(autoRepeat * 1000 + .0000000001)) + "ms"],
+        8: langList
     }[state]
 def updateModeMenuText():
     global menuOptions, gameType
@@ -656,7 +665,7 @@ while True:
         render_text(getLangTxt("title"), (10, 50 - 20 * {0: 0, 2: 1}[state]), size = 24)
     if state in [0, 1, 2]:
         render_text(getLangTxt("version") + " " + version, (20, 220), size = 14)
-    if state in [1, 2, 3, 5]: # Menu states
+    if state in [1, 2, 3, 5, 6, 7, 8]: # Menu states
         if state == 3:
             updateModeMenuText()
         else:
@@ -674,7 +683,7 @@ while True:
             if state == 3:
                 state, gameType, selectedOption = [
                     [(2, 0, 0), (3, 0, 1), (3, 0, 2), (4, 0, 0)],
-                    [(2, 0, 1), (3, 1, 0)],
+                    [(2, 0, 1), (4, 1, 0)],
                     [(2, 0, 2), (4, 0, 1), (4, 2, 0)],
                     [(2, 0, 3), (4, 3, 0)],
                     [(2, 0, 4), (4, 4, 0)]
@@ -682,14 +691,17 @@ while True:
             else:
                 state, gameType, selectedOption = {
                     1: [(2, 0, 0) for i in langList],
-                    2: [(3, 0, 3), (3, 1, 1), (3, 2, 2), (3, 3, 1), (3, 4, 1)],
-                    5: [(4, gameType, 0), (4, gameType, 0), (3, gameType, 0)]
+                    2: [(3, 0, 3), (3, 1, 1), (3, 2, 2), (3, 3, 1), (3, 4, 1), (6, 0, 0)],
+                    5: [(4, gameType, 0), (4, gameType, 0), (3, gameType, 0)],
+                    6: [(2, 0, 5), (7, 0, 1), (8, 0, langNum)],
+                    7: [(6, 0, 1), (7, 0, 1), (7, 0, 2)],
+                    8: [(6, 0, 2) for i in langList],
                 }[state][selectedOption]
-            if prevState in [1]:
+            if prevState in [1, 8]:
                 updateLang(prevOption)
             if prevState in [5] and prevOption == 2:
                 currentGravity = 1
-            if state in [3] and gameType in [0, 2]:
+            if state in [3] and prevState not in [3] and gameType in [0, 2]:
                 startingLevel = 1
                 endlessGame = False
             elif state in [4] and not (prevState == 5 and prevOption == 0):
@@ -717,16 +729,26 @@ while True:
                 if gameType == 2:
                     if selectedOption == 1:
                         startingLevel = min(startingLevel + 1, 30)
+            elif state == 7:
+                if selectedOption == 1:
+                    delayedAutoShift = min(delayedAutoShift + .01, 1)
+                elif selectedOption == 2:
+                    autoRepeat = min(autoRepeat + .01, 1)
         elif checkKeys(defaultKeys["menuLeft"]) and not checkKeys(defaultKeys["menuLeft"], keysPressedLastFrame):
             if state == 3:
                 if gameType == 0:
                     if selectedOption == 1:
-                        startingLevel = max(startingLevel - 1, 1)
+                        startingLevel = min(startingLevel - 1, 1)
                     elif selectedOption == 2:
                         endlessGame = not endlessGame
                 if gameType == 2:
                     if selectedOption == 1:
-                        startingLevel = max(startingLevel - 1, 1)
+                        startingLevel = min(startingLevel - 1, 1)
+            elif state == 7:
+                if selectedOption == 1:
+                    delayedAutoShift = max(delayedAutoShift - .01, .01)
+                elif selectedOption == 2:
+                    autoRepeat = max(autoRepeat - .01, 0)
     if state == 0:
         render_text(getLangTxt("pressAnyKey"), (5, 100), size = 18)
         if True in pressedKeys:
