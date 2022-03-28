@@ -1,3 +1,4 @@
+from genericpath import exists
 import os, sys, pygame, time, random, json
 from unicodedata import name
 
@@ -65,7 +66,10 @@ defaultLang = {
 langDirectory = os.path.join(os.path.dirname(__file__), "lang")
 def refreshLangList():
     global langList
-    langList = [f for f in os.listdir(langDirectory) if os.path.isfile(os.path.join(langDirectory, f))]
+    if os.path.exists(langDirectory):
+        langList = [f for f in os.listdir(langDirectory) if os.path.isfile(os.path.join(langDirectory, f))]
+    else:
+        langList = []
     langList = ["english"] + [i[: -5] for i in langList if i[-5 :] == ".json"]
     return langList
     ## legacy language input code
