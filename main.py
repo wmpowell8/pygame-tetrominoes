@@ -2,7 +2,7 @@ from genericpath import exists
 import os, sys, pygame, time, random, json
 from unicodedata import name
 
-version = "a0.1.0"
+version = "a0.1.1"
 minFrameLength = 1 / 60 # reciprocral of maximum framerate
 delayedAutoShift = .3
 autoRepeat = .06
