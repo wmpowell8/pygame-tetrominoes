@@ -681,7 +681,7 @@ while True:
     if state in [0, 2]:
         render_text(getLangTxt("title"), (10, 50 - 20 * {0: 0, 2: 1}[state]), size = 24)
     if state in [0, 1, 2]:
-        render_text(getLangTxt("version") + " " + version, (20, 220), size = 14)
+        render_text(getLangTxt("version") + " " + version + " - © wmpowell8 2022", (20, 220), size = 14)
     if state in [1, 2, 3, 5, 6, 7, 8]: # Menu states
         if state == 3:
             updateModeMenuText()
