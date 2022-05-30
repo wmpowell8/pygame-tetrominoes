@@ -49,19 +49,7 @@ defaultLang = {
     "handling"     : "handling",
     "DAS"          : "DAS delay",
     "ARR"          : "DAS speed (ARR)",
-    "langSelect"   : "language select",
-    "pwinfo"       : "protestware info",
-    "pwinfotxt"    : [
-        "The Russian language option has been",
-        "removed because:",
-        "- some of the translations came from Google",
-        "  Translate (such as the ones for this",
-        "  message), which can sometimes be",
-        "  unreliable",
-        "- of Russia's invasion of Ukraine"
-    ],
-    "pwfputin"     : "F**k You, Putin!",
-    "pwexit"       : "Press Enter To Exit"
+    "langSelect"   : "language select"
 }
 langDirectory = os.path.join(os.path.dirname(__file__), "lang")
 def refreshLangList():
@@ -620,7 +608,7 @@ def updateMenuText():
     global menuOptions, state
     menuOptions = {
         1: langList,
-        2: [getLangTxt("classic"), getLangTxt("endurance"), getLangTxt("extreme"), getLangTxt("40line"), getLangTxt("3min"), getLangTxt("settings"), getLangTxt("pwinfo")],
+        2: [getLangTxt("classic"), getLangTxt("endurance"), getLangTxt("extreme"), getLangTxt("40line"), getLangTxt("3min"), getLangTxt("settings")],
         5: [getLangTxt("continue"), getLangTxt("retry"), getLangTxt("exit")],
         6: [getLangTxt("back"), getLangTxt("handling"), getLangTxt("langSelect")],
         7: [getLangTxt("back"), getLangTxt("DAS") + ": " + str(int(delayedAutoShift * 1000 + .0000000001)) + "ms", getLangTxt("ARR") + ": " + str(int(autoRepeat * 1000 + .0000000001)) + "ms"],
@@ -708,7 +696,7 @@ while True:
             else:
                 state, gameType, selectedOption = {
                     1: [(2, 0, 0) for i in langList],
-                    2: [(3, 0, 3), (3, 1, 1), (3, 2, 2), (3, 3, 1), (3, 4, 1), (6, 0, 0), (9, 0, 0)],
+                    2: [(3, 0, 3), (3, 1, 1), (3, 2, 2), (3, 3, 1), (3, 4, 1), (6, 0, 0)],
                     5: [(4, gameType, 0), (4, gameType, 0), (3, gameType, 0)],
                     6: [(2, 0, 5), (7, 0, 1), (8, 0, langNum)],
                     7: [(6, 0, 1), (7, 0, 1), (7, 0, 2)],
@@ -766,71 +754,7 @@ while True:
                     delayedAutoShift = max(delayedAutoShift - .01, .01)
                 elif selectedOption == 2:
                     autoRepeat = max(autoRepeat - .01, 0)
-    elif state == 9: # Protestware
-        pwtext = [
-            {
-                "name": "English",
-                "message": getLangTxt("pwinfotxt"),
-                "fputin": getLangTxt("pwfputin")
-            },
-            {
-                "name": "український",
-                "message": [
-                    "Параметр рускай мовы быў выдалены, таму",
-                    "што:",
-                    "- некаторыя пераклады зроблены з Google",
-                    "  Translate (напрыклад, для гэтага",
-                    "  паведамлення), што часам можа быць",
-                    "  ненадзейным",
-                    "- пра ўварванне Расеі ва Украіну"
-                ],
-                "fputin": "На хуй, Путін!"
-            },
-            {
-                "name": "беларуская",
-                "message": [
-                    "Параметр російської мови вилучено,",
-                    "оскільки:",
-                    "- деякі переклади (наприклад, цей)",
-                    "  надійшли з Google Translate, який іноді",
-                    "  може бути ненадійним",
-                    "- про вторгнення Росії в Україну"
-                ],
-                "fputin": "До біса, Путін!"
-            },
-            {
-                "name": "русский",
-                "message": [
-                    "Опция русского языка была удалена,",
-                    "потому что:",
-                    "- некоторые переводы (такие как этот)",
-                    "  взяты из Google Translate, что иногда",
-                    "  может быть ненадежным",
-                    "- о вторжении России в Украину"
-                ],
-                "fputin": "Иди нахуй, Путин!"
-            }
-        ]
 
-        try:
-            pwLangNum
-        except NameError:
-            pwLangNum = 0
-
-        if checkKeys(defaultKeys["menuSelect"]) and not checkKeys(defaultKeys["menuSelect"], keysPressedLastFrame):
-            state, gameType, selectedOption = 2, 0, 0
-        if checkKeys(defaultKeys["menuRight"]) and not checkKeys(defaultKeys["menuRight"], keysPressedLastFrame):
-            pwLangNum = (pwLangNum + 1) % len(pwtext)
-        if checkKeys(defaultKeys["menuLeft"]) and not checkKeys(defaultKeys["menuLeft"], keysPressedLastFrame):
-            pwLangNum = (pwLangNum - 1) % len(pwtext)
-        pygame.draw.rect(screen, pygame.Color(  0,   0, 255), pygame.Rect(0,        0, width, height/2))
-        pygame.draw.rect(screen, pygame.Color(255, 255,   0), pygame.Rect(0, height/2, width, height/2))
-        for i in enumerate(pwtext[pwLangNum]["message"]):
-            render_text(i[1], (0, 20 + 14*i[0]), size=14)
-        render_text(pwtext[pwLangNum]["fputin"], (50, 20 + height/2), pygame.Color(0, 0, 0), 14)
-        render_text("< " + pwtext[pwLangNum]["name"] + " >", (10, height/2 + 40), pygame.Color(0,0,0), 14)
-        render_text(getLangTxt("pwexit"), (10, height/2 + 60), pygame.Color(0, 0, 0), 16)
-          
     if state == 0:
         render_text(getLangTxt("pressAnyKey"), (5, 100), size = 18)
         if True in pressedKeys:
